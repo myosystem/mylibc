@@ -2,4 +2,5 @@
 #define __STDLIB_H__
 #include "stdint.h"
 void* malloc(size_t size);
+void free(void* ptr);
 #endif // __STDLIB_H__

@@ -1,0 +1,43 @@
+#ifndef __MYOS__
+#define __MYOS__
+#include <stdint.h>
+#define MSG_TYPE_DEFAULT 0
+#define MSG_TYPE_SHM_REQUEST 1
+typedef struct {
+    uint64_t sender_pid;    // 8 bytes (Explicitly aligned)
+    uint32_t type;          // 4 bytes
+    uint32_t status;        // 4 bytes (타입 옆에 상태나 플래그를 두어 8바이트 쌍을 맞춤)
+
+    union {
+        // 일반적인 정수형 인자들
+        struct {
+            uint64_t arg[3];
+        } params;
+
+        // 공유 메모리나 문자열 처리를 위한 구조
+        struct {
+            void* addr;
+            uint64_t size;
+            uint64_t flags;
+        } memory;
+
+        // 데이터 페이로드 (짧은 메시지 직송용)
+        uint8_t raw[24];
+    } payload;
+
+    uint64_t timestamp;     // 8 bytes
+} __attribute__((packed)) msg_t;
+uint64_t send_msg(uint64_t dest_pid, const msg_t* msg);
+uint64_t receive_msg(msg_t* msg);
+class SharedMem {
+private:
+    uint64_t id;
+    uint64_t size;
+public:
+    SharedMem();
+	void* create(uint64_t size);
+	void* accept(uint64_t id);
+	uint64_t get_id() const;
+	uint64_t get_size() const;
+};
+#endif // __MYOS__
