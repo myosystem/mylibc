@@ -1,0 +1,9 @@
+#ifndef __UTILITY__
+#define __UTILITY__
+namespace std {
+    template <typename T>
+    T&& move(T& val) {
+        return static_cast<T&&>(val);
+    }
+}
+#endif /*__UTILITY__*/

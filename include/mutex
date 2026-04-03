@@ -1,0 +1,30 @@
+#ifndef __MUTEX_H__
+#define __MUTEX_H__
+struct once_flag {
+    int state = 0; // 0: 미실행, 1: 실행중, 2: 완료
+};
+
+template<typename Func>
+void call_once(once_flag& flag, Func&& f) {
+    int expected = 0;
+
+    // compare_exchange: 0 -> 1 성공한 놈만 실행
+    if (__atomic_compare_exchange_n(&flag.state, &expected, 1,
+        false,
+        __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+        f();
+        __atomic_store_n(&flag.state, 2, __ATOMIC_SEQ_CST);
+    }
+    else {
+        // 실행중인 동안 spin wait
+        while (__atomic_load_n(&flag.state, __ATOMIC_SEQ_CST) != 2) {
+            // 아키텍처별 yield (없으면 그냥 빈 루프도 됨)
+#if defined(__x86_64__) || defined(__i386__)
+            __builtin_ia32_pause();
+#elif defined(__aarch64__) || defined(__arm__)
+            asm volatile("yield");
+#endif
+        }
+    }
+}
+#endif // __MUTEX_H__

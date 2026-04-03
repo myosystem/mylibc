@@ -1,0 +1,7 @@
+#ifndef __NEW__
+#define __NEW__
+#include <stdint.h>
+inline void* operator new(size_t, void* ptr) noexcept {
+    return ptr; // 그냥 ptr 그대로 반환
+}
+#endif /*__NEW__*/
