@@ -1,0 +1,32 @@
+#ifndef __RANGES__
+#define __RANGES__
+
+namespace std::ranges {
+    template <typename Range>
+    class reverse_view {
+        Range& range_;
+    public:
+        reverse_view(Range& r) : range_(r) {}
+
+        auto begin() { return range_.rbegin(); }
+        auto end() { return range_.rend(); }
+        auto begin() const { return range_.crbegin(); }
+        auto end()   const { return range_.crend(); }
+    };
+    struct reverse_view_adaptor {
+        template <typename Range>
+        auto operator()(Range& r) const {
+            return reverse_view<Range>(r);
+        }
+
+        template <typename Range>
+        friend auto operator|(Range& r, const reverse_view_adaptor& adaptor) {
+            return adaptor(r);
+        }
+    };
+    namespace views {
+        inline constexpr reverse_view_adaptor reverse{};
+    }
+}
+
+#endif /* __RANGES__ */

@@ -1,10 +1,28 @@
 #include <myos>
 #include <stdlib.h>
+#include <stdio.h>
+struct _FILE {
+	uint8_t* buffer;
+	uint64_t bufsize;
+	uint64_t cursor;
+	uint64_t fd;
+	uint64_t flags;
+	uint64_t limit;
+	uint32_t ungetc_buf;
+	uint32_t unget_count;
+	uint8_t dirty;
+};
 extern "C" __attribute__((naked, section(".entry"))) void _start() {
 	__asm__ __volatile__(
 		"sub rsp, 32\n\t"
 		"call _before_main\n\t"
 		"call main\n\t"
+		"push rax\n\t"
+		"call _after_main\n\t"
+		"pop rax\n\t"
+		"mov rdi, rax\n\t"
+		"mov rax, 60\n\t" // exit syscall
+		"int 0x80\n\t"
 	);
 }
 uint64_t send_msg(uint64_t dest_pid, const msg_t* msg) {
@@ -27,7 +45,22 @@ uint64_t receive_msg(msg_t* msg) {
 	);
 	return ret; // return value in rax (메시지 수신 성공 여부)
 }
-
+void wait_for_msg() {
+	__asm__ __volatile__(
+		"int 0x81"
+		:
+		: "a"(0x04)
+		: "rcx", "r11", "memory"
+	);
+}
+void sleep(uint64_t ms) {
+	__asm__ __volatile__(
+		"int 0x81"
+		:
+	: "a"(32), "D"(ms)
+		:"memory"
+	);
+}
 void* operator new(size_t size) {
 	// 단순히 malloc으로 구현 (실제 구현에서는 더 복잡한 메모리 관리 필요)
 	return malloc(size);
@@ -95,44 +128,88 @@ uint64_t SharedMem::get_size() const {
 	return size;
 }
 once_flag Window::ginfo_once_flag;
+Ginfo Window::ginfo;
+uint64_t Window::bytesPerPixel;
 Window::Window(uint32_t width, uint32_t height) : Window({0,0,width,height}) {
 }
 Window::Window(RECT rect) : rect(rect) {
 	call_once(ginfo_once_flag, [this]() {
 		get_ginfo(&ginfo);
+		switch (ginfo.format) { // Updated to use ginfo.format instead of ModeInfo->PixelFormat
+		case GOP_PIXEL_FORMAT_RGBR:
+		case GOP_PIXEL_FORMAT_BGRR:
+			bytesPerPixel = 4;
+			break;
+
+		case GOP_PIXEL_FORMAT_BITMASK: {
+			uint32_t mask = (uint32_t)ginfo.format;
+			mask = (uint32_t)(ginfo.width | ginfo.height);
+			uint32_t highest = 31;
+			while (highest && ((mask >> highest) & 1) == 0)
+				highest--;
+			bytesPerPixel = ((highest + 1) + 7) / 8;
+			break;
+		}
+		case GOP_PIXEL_FORMAT_BLT_ONLY:
+		default:
+			bytesPerPixel = 0;
+			break;
+		}
 		});
-	uint64_t bytesPerPixel;
-
-	switch (ginfo.format) { // Updated to use ginfo.format instead of ModeInfo->PixelFormat
-	case GOP_PIXEL_FORMAT_RGBR:
-	case GOP_PIXEL_FORMAT_BGRR:
-		bytesPerPixel = 4;
-		break;
-
-	case GOP_PIXEL_FORMAT_BITMASK: {
-		uint32_t mask = (uint32_t)ginfo.format;
-		mask = (uint32_t)(ginfo.width | ginfo.height);
-		uint32_t highest = 31;
-		while (highest && ((mask >> highest) & 1) == 0)
-			highest--;
-		bytesPerPixel = ((highest + 1) + 7) / 8;
-		break;
-	}
-	case GOP_PIXEL_FORMAT_BLT_ONLY:
-	default:
-		bytesPerPixel = 0;
-		break;
-	}
-	gbuf_addr = gbuf.create(rect.width * rect.height * bytesPerPixel);
+	gbuf = gshm.create(rect.width * rect.height * bytesPerPixel);
 	msg_t msg{
 	.sender_pid = 1,
 	.type = MSG_MAKE_WINDOW,
 	.status = 0,
-	.payload{ {gbuf.get_id(),pack_u32(rect.x,rect.y), pack_u32(rect.width, rect.height)}},
+	.payload{ {gshm.get_id(),pack_u32(rect.x,rect.y), pack_u32(rect.width, rect.height)}},
 	.timestamp = 0
 	};
 	uint64_t result = send_msg(0, &msg);
-}
-extern "C" void _before_main() {
+	printf("Code %d: Sent MSG_MAKE_WINDOW with shared memory id %d, result=%d\n", (int)msg.type, (int)gshm.get_id(), (int)result);
+	wait_for_msg();
+	msg_t response;
+	receive_msg(&response);
 
+}
+FILE* stdout;
+FILE* stdin;
+FILE* stderr;
+extern "C" void _before_main() {
+	stdout = (FILE*)malloc(sizeof(FILE));
+	stdin = (FILE*)malloc(sizeof(FILE));
+	stderr = (FILE*)malloc(sizeof(FILE));
+	stdout->fd = 1; // 표준 출력
+	stdout->buffer = (uint8_t*)malloc(1024); // 버퍼 할당
+	stdout->bufsize = 1024;
+	stdout->cursor = 0;
+	stdout->flags = _IOLBF;
+	stdout->dirty = 0;
+	stdout->ungetc_buf = 0;
+	stdout->unget_count = 0;
+	stdout->limit = 1024;
+
+	stdin->fd = 0; // 표준 입력
+	stdin->buffer = (uint8_t*)malloc(1024); // 버퍼 할당
+	stdin->bufsize = 1024;
+	stdin->cursor = 0;
+	stdin->flags = _IOFBF; // 버퍼링 없음
+	stdin->dirty = 0;
+	stdin->ungetc_buf = 0;
+	stdin->unget_count = 0;
+	stdin->limit = 0; // 아직 읽을게 없음
+
+	stderr->fd = 2; // 표준 오류
+	stderr->buffer = nullptr; // 버퍼 할당
+	stderr->bufsize = 0;
+	stderr->cursor = 0;
+	stderr->flags = _IONBF; // 라인 버퍼링
+	stderr->dirty = 0;
+	stderr->ungetc_buf = 0;
+	stderr->unget_count = 0;
+	stderr->limit = 0;
+}
+extern "C" void _after_main() {
+	fclose(stdout);
+	fclose(stdin);
+	fclose(stderr);
 }

@@ -2,6 +2,7 @@
 #define __VECTOR__
 #include <stdint.h>
 #include <utility>
+#include <iterator>
 #include <new>
 namespace std {
 	template <typename T>
@@ -16,6 +17,14 @@ namespace std {
 			data_ = nullptr;
 			size_ = 0;
 			capacity_ = 0;
+		}
+		void clear() {
+			for (size_t i = 0; i < size_; i++) {
+				data_[i].~T();
+			}
+			size_ = 0;
+			capacity_ = 0;
+			resize();
 		}
 		void push_back(const T& value) {
 			if (size_ == capacity_) {
@@ -34,6 +43,10 @@ namespace std {
 		size_t capacity() const { return capacity_; }
 		T* begin() { return data_; }
 		T* end() { return data_ + size_; }
+		reverse_iterator<T*> rbegin() { return reverse_iterator<T*>(data_ + size_); }
+		reverse_iterator<T*> rend() { return reverse_iterator<T*>(data_); }
+		reverse_iterator<const T*> crbegin() const { return reverse_iterator<const T*>(data_ + size_); }
+		reverse_iterator<const T*> crend()   const { return reverse_iterator<const T*>(data_); }
 		T* erase(size_t index) {
 			if (index >= size_) return nullptr;
 			for (size_t i = index; i < size_ - 1; i++) {
@@ -43,6 +56,21 @@ namespace std {
 			data_[size_ - 1].~T();
 			size_--;
 			return data_ + index;
+		}
+		T& front() {
+			return data_[0];
+		}
+		const T& front() const {
+			return data_[0];
+		}
+		T& back() {
+			return data_[size_ - 1];
+		}
+		const T& back() const {
+			return data_[size_ - 1];
+		}
+		bool empty() const {
+			return size_ == 0;
 		}
 	private:
 		void resize() {

@@ -1,0 +1,31 @@
+#ifndef __ALGORITHM__
+#define __ALGORITHM__
+
+namespace std
+{
+    template <typename T>
+    void swap(T& a, T& b) {
+        T tmp = move(a);
+        a = move(b);
+        b = move(tmp);
+    }
+    template <typename Iter1, typename Iter2>
+    void iter_swap(Iter1 a, Iter2 b) {
+        swap(*a, *b);
+    }
+    template <typename Iter>
+    Iter rotate(Iter first, Iter middle, Iter last) {
+        if (first == middle) return last;
+        if (middle == last) return first;
+
+        Iter next = middle;
+        while (first != next) {
+            std::iter_swap(first++, next++);
+            if (next == last) next = middle;
+            else if (first == middle) middle = next;
+        }
+        return first;
+    }
+}
+
+#endif /* __ALGORITHM__ */
