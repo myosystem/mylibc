@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 struct _FILE {
 	uint8_t* buffer;
@@ -17,42 +19,11 @@ struct _FILE {
 	uint32_t unget_count;
     uint8_t dirty;
 };
-__attribute__((naked,noinline))
-static uint64_t write_syscall(uint64_t fd, const char* buf, uint64_t len) {
-    __asm__ __volatile__(
-        "int 0x80;"
-        "ret;"
-        :
-    : "a"(1)                // rax=1 ("write" syscall)
-		: "rcx", "r11", "memory" // rdi rsi rdx는 함수 인자로 전달되므로 클로버시 필요 없음
-        );
-}
-__attribute__((naked,noinline))
-static uint64_t read_syscall(uint64_t fd, char* buf, uint64_t len) {
-    __asm__ __volatile__(
-        "int 0x80;"
-        "ret;"
-        :
-    : "a"(2)                // rax=2 ("read" syscall)
-		: "rcx", "r11", "memory" // rdi rsi rdx는 함수 인자로 전달되므로 클로버시 필요 없음
-        );
-}
-__attribute__((naked,noinline))
-static uint64_t open_syscall(const char* path) {
-    uint64_t fd;
-    __asm__ __volatile__(
-        "int 0x80;"
-		"ret;"
-        :
-    : "a"(8)                // rax=8 ("open" syscall)
-		: "rcx", "r11", "memory" // rdi는 함수 인자로 전달되므로 클로버시 필요 없음
-        );
-}
 int fflush(FILE* stream) {
     if (!stream->dirty || stream->cursor == 0) {
         return 0;
     }
-    int64_t written = write_syscall(stream->fd, (const char*)stream->buffer, stream->cursor);
+    int64_t written = write(stream->fd, (const char*)stream->buffer, stream->cursor);
 
     if (written < 0) {
         return -1;
@@ -207,7 +178,7 @@ FILE* fopen(const char* pathname, const char* mode) {
     f->bufsize = 1024;
     f->cursor = 0;
     f->dirty = 0;
-    f->fd = open_syscall(pathname);
+    f->fd = open(pathname,0);
     if (f->fd < 0) {
         free(f->buffer);
         free(f);
@@ -216,13 +187,14 @@ FILE* fopen(const char* pathname, const char* mode) {
     f->flags = 0; // simple implementation: ignore mode parsing
 	return f;
 }
-void fclose(FILE* stream) {
-    if (!stream) return;
+int fclose(FILE* stream) {
+    if (!stream) return -1;
     fflush(stream);
+    close(stream->fd);
     if (stream->buffer)
         free(stream->buffer);
     free(stream);
-    return;
+    return 0;
 }
 int ungetc(int c, FILE* stream) {
     if (stream->unget_count < 4) {
@@ -243,7 +215,7 @@ int fgetc(FILE* stream) {
     }
 
     if (stream->cursor >= stream->limit) {
-        int64_t n = read_syscall(stream->fd, (char*)stream->buffer, stream->bufsize);
+        int64_t n = read(stream->fd, (char*)stream->buffer, stream->bufsize);
         if (n <= 0) return -1;
 
         stream->limit = n;
@@ -403,7 +375,7 @@ size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream) {
             if (bytes_to_read >= stream->bufsize) {
                 // 남은 양이 버퍼 크기보다 크면 버퍼 거치지 말고 직접 유저 버퍼로 꽂아버림 (최적화)
                 size_t direct_read_blocks = bytes_to_read / stream->bufsize;
-                int64_t n = read_syscall(stream->fd, (char*)out, direct_read_blocks * stream->bufsize);
+                int64_t n = read(stream->fd, (char*)out, direct_read_blocks * stream->bufsize);
                 if (n <= 0) break;
 
                 out += n;
@@ -413,7 +385,7 @@ size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream) {
             }
             else {
                 // 남은 양이 버퍼보다 작으면 다시 버퍼를 채움
-                int64_t n = read_syscall(stream->fd, (char*)stream->buffer, stream->bufsize);
+                int64_t n = read(stream->fd, (char*)stream->buffer, stream->bufsize);
                 if (n <= 0) break;
 
                 stream->limit = n;

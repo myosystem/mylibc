@@ -6,6 +6,12 @@
 enum {
     MSG_NONE = 0,
 
+    MSG_KEY_BASE = 0x100,
+    MSG_KEY_PRESS = MSG_KEY_BASE + 1,
+    MSG_KEY_RELEASE = MSG_KEY_BASE + 2,
+
+    MSG_TIMER_BASE = 0x200,
+    MSG_TIMER_EXPIRED = MSG_TIMER_BASE + 1,
     // generic IPC
     MSG_IPC_BASE = 0x1000,
 
@@ -23,6 +29,22 @@ enum {
     MSG_MOUSE_SCROLL = MSG_GUI_BASE + 0x103,
     MSG_MOUSE_LRELEASE = MSG_MOUSE_LCLICK + 0x10,
     MSG_MOUSE_RRELEASE = MSG_MOUSE_RCLICK + 0x10,
+};
+enum {
+    KEY_LSHIFT = 0x101,
+    KEY_RSHIFT = 0x102,
+    KEY_LCTRL = 0x103,
+    KEY_RCTRL = 0x104,
+    KEY_LALT = 0x105,
+    KEY_RALT = 0x106,
+
+    KEY_RIGHT = 0x110,
+    KEY_LEFT = 0x111,
+    KEY_DOWN = 0x112,
+    KEY_UP = 0x113,
+
+    KEY_ESC = 0x120,
+
 };
 typedef struct {
     uint64_t sender_pid;    // 8 bytes (Explicitly aligned)
@@ -48,10 +70,12 @@ typedef struct {
 
     uint64_t timestamp;     // 8 bytes
 } __attribute__((packed)) msg_t;
-uint64_t send_msg(uint64_t dest_pid, const msg_t* msg);
+uint64_t send_msg(uint64_t dest_pid, const msg_t* msg, bool is_block = true);
 uint64_t receive_msg(msg_t* msg);
 void wait_for_msg();
 void sleep(uint64_t ms);
+uint64_t set_timer(uint64_t timeout_ms,uint64_t interval_ms = 0);
+void cancel_timer(uint64_t timer_id);
 class SharedMem {
 private:
     uint64_t id;

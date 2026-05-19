@@ -17,21 +17,17 @@ extern "C" __attribute__((naked, section(".entry"))) void _start() {
 		"sub rsp, 32\n\t"
 		"call _before_main\n\t"
 		"call main\n\t"
-		"push rax\n\t"
-		"call _after_main\n\t"
-		"pop rax\n\t"
 		"mov rdi, rax\n\t"
-		"mov rax, 60\n\t" // exit syscall
-		"int 0x80\n\t"
+		"call _after_main\n\t"
 	);
 }
-uint64_t send_msg(uint64_t dest_pid, const msg_t* msg) {
+uint64_t send_msg(uint64_t dest_pid, const msg_t* msg, bool is_block) {
 	uint64_t ret;
 	__asm__ __volatile__(
 		"int 0x80"
 		: "=a"(ret)
-		: "a"(0x04), "D"(0), "S"((uint64_t)msg), "d"(dest_pid)
-		: "rcx", "r11", "memory"
+		: "a"(0x04), "D"(0), "S"((uint64_t)msg), "d"(dest_pid), "c"((uint64_t)is_block)
+		: "r11", "memory"
 	);
 	return ret; // return value in rax
 }
@@ -58,6 +54,24 @@ void sleep(uint64_t ms) {
 		"int 0x81"
 		:
 	: "a"(32), "D"(ms)
+		:"memory"
+	);
+}
+uint64_t set_timer(uint64_t timeout_ms, uint64_t interval_ms) {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x06), "D"(0x35), "S"(timeout_ms), "d"(interval_ms)
+		: "rcx", "r11", "memory"
+	);
+	return ret; // return value in rax (Å¸ÀÌ¸Ó ID)
+}
+void cancel_timer(uint64_t timer_id) {
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+	: "a"(0x06), "D"(0x0), "S"(timer_id)
 		:"memory"
 	);
 }
@@ -208,8 +222,10 @@ extern "C" void _before_main() {
 	stderr->unget_count = 0;
 	stderr->limit = 0;
 }
-extern "C" void _after_main() {
+extern "C" void _after_main(int exit_code) {
 	fclose(stdout);
 	fclose(stdin);
 	fclose(stderr);
+	exit(exit_code);
 }
+extern "C" void* __dso_handle = nullptr;

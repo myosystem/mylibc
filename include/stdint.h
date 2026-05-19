@@ -10,9 +10,4 @@ typedef unsigned short     uint16_t;
 typedef unsigned int       uint32_t;
 typedef unsigned long long uint64_t;
 typedef uint64_t uintptr_t;
-#ifdef _MSC_VER
-typedef unsigned long long size_t;
-#else
-typedef unsigned long size_t;
-#endif
 #endif // __STDINT_H__

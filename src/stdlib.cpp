@@ -1,5 +1,9 @@
 ﻿#include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <vector>
 #define PAGE_SIZE 4096
 #define MMAP_THRESHOLD (128 * 1024) // 128KiB 이상이면 mmap 사용
 #define MIN_SLOT_PER_CHUNK 16
@@ -214,4 +218,34 @@ void free(void* ptr) {
         if (chunk_heads[head->level] == head) chunk_heads[head->level] = head->next;
         syscall_munmap(head, head->page_count * PAGE_SIZE);
     }
+}
+static std::vector<void(*)()> atexit_handlers;
+
+int atexit(void (*func)(void)) {
+    atexit_handlers.push_back(func);
+    return 0;
+}
+struct cxa_atexit_entry {
+    void (*func)(void*);
+    void* arg;
+    void* dso;
+};
+
+static std::vector<cxa_atexit_entry> cxa_handlers;
+
+int __cxa_atexit(void (*func)(void*), void* arg, void* dso) {
+    cxa_atexit_entry entry = { func, arg, dso };
+    cxa_handlers.push_back(entry);
+    return 0;
+}
+void exit(int status) {
+    for (int i = cxa_handlers.size() - 1; i >= 0; i--) {
+        cxa_handlers[i].func(cxa_handlers[i].arg);
+    }
+    for (int i = atexit_handlers.size() - 1; i >= 0; i--) {
+        atexit_handlers[i]();
+    }
+    fflush(stdout);
+    fflush(stderr);
+    _exit(status);
 }
