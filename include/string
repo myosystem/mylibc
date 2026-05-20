@@ -1,0 +1,21 @@
+#ifndef __STRING__
+#define __STRING__
+#include <stddef.h>
+namespace std {
+	class string {
+	public:
+		string();
+		string(const char* s);
+		string(const string& other);
+		string(string&& other) noexcept;
+		~string();
+		string& operator=(const string& other);
+		string& operator=(string&& other) noexcept;
+		const char* c_str() const;
+		size_t size() const;
+	private:
+		char* data;
+		size_t length;
+	};
+}
+#endif /*__STRING__*/
