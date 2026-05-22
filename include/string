@@ -16,6 +16,7 @@ namespace std {
 	private:
 		char* data;
 		size_t length;
+		size_t cap;
 	};
 }
 #endif /*__STRING__*/

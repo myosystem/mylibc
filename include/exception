@@ -1,0 +1,24 @@
+namespace std {
+
+    class exception {
+    public:
+        exception() noexcept = default;
+        virtual ~exception() noexcept = default;
+
+        virtual const char* what() const noexcept {
+            return "std::exception";
+        }
+    };
+
+    class bad_alloc : public exception {
+    public:
+        bad_alloc() noexcept = default;
+
+        virtual ~bad_alloc() noexcept = default;
+
+        const char* what() const noexcept override {
+            return "std::bad_alloc";
+        }
+    };
+
+}
