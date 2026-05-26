@@ -1,7 +1,31 @@
 #ifndef __NEW__
 #define __NEW__
-#include <stdint.h>
+#include <stddef.h>
+#include <exception>
+void* operator new(size_t size);
+void operator delete(void* ptr) noexcept;
+
+void* operator new[](size_t size);
+void operator delete[](void* ptr) noexcept;
 inline void* operator new(size_t, void* ptr) noexcept {
     return ptr; // 그냥 ptr 그대로 반환
+}
+inline void operator delete(void*, void*) noexcept
+{}
+namespace std {
+    class bad_alloc : public exception {
+    public:
+        bad_alloc() noexcept = default;
+
+        virtual ~bad_alloc() noexcept = default;
+
+        const char* what() const noexcept override {
+            return "std::bad_alloc";
+        }
+    };
+    using new_handler = void(*)();
+
+    new_handler set_new_handler(new_handler) noexcept;
+    new_handler get_new_handler() noexcept;
 }
 #endif /*__NEW__*/

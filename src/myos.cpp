@@ -75,20 +75,6 @@ void cancel_timer(uint64_t timer_id) {
 		:"memory"
 	);
 }
-void* operator new(size_t size) {
-	// 단순히 malloc으로 구현 (실제 구현에서는 더 복잡한 메모리 관리 필요)
-	return malloc(size);
-}
-void operator delete(void* ptr) {
-	// 단순히 free로 구현 (실제 구현에서는 더 복잡한 메모리 관리 필요)
-	free(ptr);
-}
-void* operator new[](size_t size) {
-	return malloc(size);
-}
-void operator delete[](void* ptr) {
-	free(ptr);
-}
 
 SharedMem::SharedMem() : id(0), size(0) {}
 
