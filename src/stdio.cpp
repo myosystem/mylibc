@@ -125,6 +125,34 @@ int vfprintf(FILE* stream, const char* fmt, va_list ap) {
             fprint_uint((uint64_t)v, 10, false, stream);
             break;
         }
+        case 'l': {
+			if (*fmt == 'd') {
+				int64_t v = va_arg(ap, int64_t);
+				fprint_int(v, stream);
+				++fmt;
+			}
+			else if (*fmt == 'u') {
+				uint64_t v = va_arg(ap, uint64_t);
+				fprint_uint(v, 10, false, stream);
+				++fmt;
+			}
+			else if (*fmt == 'x') {
+				uint64_t v = va_arg(ap, uint64_t);
+				fprint_uint(v, 16, false, stream);
+				++fmt;
+			}
+			else if (*fmt == 'X') {
+				uint64_t v = va_arg(ap, uint64_t);
+				fprint_uint(v, 16, true, stream);
+				++fmt;
+			}
+			else {
+				/* unknown: print literally */
+				fputc('%', stream); fputc('l', stream); fputc(*fmt, stream);
+				out_count += 3;
+			}
+			break;
+        }
         case 'x': {
             unsigned v = va_arg(ap, unsigned);
             fprint_uint((uint64_t)v, 16, false, stream);
