@@ -10,7 +10,8 @@ void* operator new(size_t size) {
 		if (__new_handler) 
 			__new_handler();
 		else
-			throw std::bad_alloc();
+			//throw std::bad_alloc();
+			return nullptr;
 
 	}
 }
@@ -21,6 +22,9 @@ void* operator new[](size_t size) {
 	return operator new(size);
 }
 void operator delete[](void* ptr) noexcept {
+	operator delete(ptr);
+}
+void operator delete(void* ptr, size_t) noexcept {
 	operator delete(ptr);
 }
 std::new_handler std::set_new_handler(std::new_handler handler) noexcept {

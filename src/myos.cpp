@@ -41,6 +41,24 @@ uint64_t receive_msg(msg_t* msg) {
 	);
 	return ret; // return value in rax (메시지 수신 성공 여부)
 }
+uint64_t get_tsc() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x07)
+		: "rcx", "r11", "memory"
+	);
+	return ret; // return value in rax
+}
+void shutdown() {
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+	: "a"(-1ull)
+		: "rcx", "r11", "memory"
+		);
+}
 void wait_for_msg() {
 	__asm__ __volatile__(
 		"int 0x81"
@@ -170,6 +188,18 @@ Window::Window(RECT rect) : rect(rect) {
 	msg_t response;
 	receive_msg(&response);
 
+}
+void Window::draw_frame(RECT rect) {
+	if (gbuf == nullptr) return;
+	msg_t msg{
+		.sender_pid = 1,
+		.type = MSG_DRAW_FRAME,
+		.status = 0,
+		.payload{ {gshm.get_id(),pack_u32(rect.x,rect.y), pack_u32(rect.width, rect.height)}},
+		.timestamp = 0
+
+	};
+	uint64_t result = send_msg(0, &msg);
 }
 FILE* stdout;
 FILE* stdin;

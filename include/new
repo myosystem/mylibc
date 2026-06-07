@@ -12,6 +12,7 @@ inline void* operator new(size_t, void* ptr) noexcept {
 }
 inline void operator delete(void*, void*) noexcept
 {}
+void operator delete(void* ptr, size_t) noexcept;
 namespace std {
     class bad_alloc : public exception {
     public:
