@@ -46,10 +46,60 @@ uint64_t get_tsc() {
 	__asm__ __volatile__(
 		"int 0x80"
 		: "=a"(ret)
-		: "a"(0x07)
+		: "a"(0x07), "D"(0)
 		: "rcx", "r11", "memory"
 	);
 	return ret; // return value in rax
+}
+uint64_t get_memory_size() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x07), "D"(2)
+		: "rcx", "r11", "memory"
+	);
+	return ret * 4096; // return value in rax (B 단위)
+}
+uint64_t get_used_memory_size() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x07), "D"(3)
+		: "rcx", "r11", "memory"
+	);
+	return ret * 4096; // return value in rax (B 단위)
+}
+uint64_t get_free_memory_size() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x07), "D"(4)
+		: "rcx", "r11", "memory"
+	);
+	return ret * 4096; // return value in rax (B 단위)
+}
+uint64_t get_process_count() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x07), "D"(5)
+		: "rcx", "r11", "memory"
+	);
+	return ret; // return value in rax (B 단위)
+}
+uint64_t get_max_process_count() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(0x07), "D"(6)
+		: "rcx", "r11", "memory"
+	);
+	return ret; // return value in rax (B 단위)
 }
 void shutdown() {
 	__asm__ __volatile__(
