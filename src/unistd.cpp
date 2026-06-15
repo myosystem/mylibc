@@ -20,8 +20,41 @@ ssize_t write(int fd, const void* buf, size_t count) {
         : "rcx", "r11", "memory" // rdi rsi rdx는 함수 인자로 전달되므로 클로버시 필요 없음
         );
 }
+__attribute__((noinline))
+int dup2(int oldfd, int newfd) {
+    int result;
+    __asm__ __volatile__(
+        "int 0x80;"
+        : "=a"(result)
+        : "a"(8), "D"(2), "S"(oldfd), "d"(newfd)                // rax=8 ("dup2" syscall)
+        : "rcx", "r11", "memory" // rdi는 함수 인자로 전달되므로 클로버시 필요 없음
+    );
+    return result;
+}
+int dup3(int oldfd, int newfd, int flags) {
+    if (oldfd == newfd) return -1;
+    return dup2(oldfd, newfd); // 플래그구현 아직 없음
+}
+__attribute__((noinline))
 int close(int fd) {
-    return 0;
+    int result;
+    __asm__ __volatile__(
+        "int 0x80;"
+        : "=a"(result)
+        : "a"(8), "D"(1), "S"(fd)                // rax=8 ("close" syscall)
+        : "rcx", "r11", "memory" // rdi는 함수 인자로 전달되므로 클로버시 필요 없음
+    );
+    return result;
+}
+__attribute__((naked, noinline))
+off_t lseek(int fd, off_t offset, int whence) {
+    __asm__ __volatile__(
+        "int 0x80;"
+        "ret;"
+        :
+        : "a"(62)
+        : "rcx", "r11", "memory"
+    );
 }
 __attribute__((naked, noinline))
 pid_t fork(void) {

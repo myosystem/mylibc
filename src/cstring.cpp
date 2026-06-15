@@ -1,4 +1,6 @@
 #include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
 void* memcpy(void* dest, const void* src, size_t size) {
     // [Intel Syntax]
     // 1. RCX = size / 8 (QWORD 개수)
@@ -118,4 +120,80 @@ char* strncpy(char* dest, const char* src, size_t n) {
         *d++ = '\0';
     }
     return dest;
+}
+size_t strlen(const char* s) {
+    const char* p = s;
+    while (*p) ++p;
+    return (size_t)(p - s);
+}
+char* strcpy(char* dest, const char* src) {
+    char* d = dest;
+    while ((*d++ = *src++));
+    return dest;
+}
+char* strcat(char* dest, const char* src) {
+    char* d = dest;
+    while (*d) ++d;
+    while ((*d++ = *src++));
+    return dest;
+}
+char* strncat(char* dest, const char* src, size_t n) {
+    char* d = dest;
+    while (*d) ++d;
+    while (n-- && *src) *d++ = *src++;
+    *d = '\0';
+    return dest;
+}
+char* strchr(const char* s, int c) {
+    while (*s) {
+        if ((unsigned char)*s == (unsigned char)c) return (char*)s;
+        ++s;
+    }
+    if (c == '\0') return (char*)s;
+    return nullptr;
+}
+char* strrchr(const char* s, int c) {
+    const char* last = nullptr;
+    do {
+        if ((unsigned char)*s == (unsigned char)c) last = s;
+    } while (*s++);
+    return (char*)last;
+}
+char* strstr(const char* haystack, const char* needle) {
+    if (!*needle) return (char*)haystack;
+    for (; *haystack; ++haystack) {
+        const char* h = haystack;
+        const char* n = needle;
+        while (*h && *n && *h == *n) { ++h; ++n; }
+        if (!*n) return (char*)haystack;
+    }
+    return nullptr;
+}
+void* memmove(void* dest, const void* src, size_t n) {
+    uint8_t* d = (uint8_t*)dest;
+    const uint8_t* s = (const uint8_t*)src;
+    if (d == s || n == 0) return dest;
+    if (d < s || d >= s + n) {
+        // no overlap or dest is before src: forward copy
+        return memcpy(dest, src, n);
+    }
+    // overlap: copy backwards
+    d += n; s += n;
+    while (n--) *--d = *--s;
+    return dest;
+}
+int memcmp(const void* s1, const void* s2, size_t n) {
+    const uint8_t* a = (const uint8_t*)s1;
+    const uint8_t* b = (const uint8_t*)s2;
+    while (n--) {
+        if (*a != *b) return (int)*a - (int)*b;
+        ++a; ++b;
+    }
+    return 0;
+}
+char* strdup(const char* s) {
+    size_t len = strlen(s) + 1;
+    char* p = (char*)malloc(len);
+    if (p) memcpy(p, s, len);
+    return p;
 }

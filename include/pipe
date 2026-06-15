@@ -1,0 +1,19 @@
+#ifndef __PIPE__
+#define __PIPE__
+#include <stdint.h>
+#include <unistd.h>
+class Pipe {
+    int read_fd;
+    int write_fd;
+public:
+    Pipe();
+    ~Pipe();
+    int read(void* buf, uint32_t len);
+    int write(const void* buf, uint32_t len);
+    void close_read();
+    void close_write();
+    void redirect_stdin() { dup2(read_fd, 0); }
+    void redirect_stdout() { dup2(write_fd, 1); }
+};
+
+#endif // __PIPE__

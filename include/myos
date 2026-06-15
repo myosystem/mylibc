@@ -54,22 +54,29 @@ typedef struct {
     union {
         // 일반적인 정수형 인자들
         struct {
-            uint64_t arg[3];
+            uint64_t arg[5];
         } params;
 
         // 공유 메모리나 문자열 처리를 위한 구조
         struct {
-            void* addr;
+            void* addr[3];
             uint64_t size;
             uint64_t flags;
         } memory;
 
         // 데이터 페이로드 (짧은 메시지 직송용)
-        uint8_t raw[24];
+        uint8_t raw[40];
     } payload;
 
     uint64_t timestamp;     // 8 bytes
 } __attribute__((packed)) msg_t;
+enum {
+    WINDOW_NOHEADER = 0b1,
+
+};
+enum {
+    WINDOW_EX_GUI = 0b1,
+};
 uint64_t send_msg(uint64_t dest_pid, const msg_t* msg, bool is_block = true);
 uint64_t receive_msg(msg_t* msg);
 void wait_for_msg();
@@ -137,8 +144,7 @@ public: // 임시
 	static once_flag ginfo_once_flag;
     static uint64_t bytesPerPixel;
 public:
-	Window(uint32_t width, uint32_t height);
-    Window(RECT rect);
+    Window(RECT rect, uint32_t style = 0, uint32_t ex_style = 0);
 	Window(const Window&) = delete;
 	void draw_frame(RECT rect);
 };

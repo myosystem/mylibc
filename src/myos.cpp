@@ -198,9 +198,7 @@ uint64_t SharedMem::get_size() const {
 once_flag Window::ginfo_once_flag;
 Ginfo Window::ginfo;
 uint64_t Window::bytesPerPixel;
-Window::Window(uint32_t width, uint32_t height) : Window({0,0,width,height}) {
-}
-Window::Window(RECT rect) : rect(rect) {
+Window::Window(RECT rect, uint32_t style, uint32_t ex_style) : rect(rect) {
 	call_once(ginfo_once_flag, [this]() {
 		get_ginfo(&ginfo);
 		switch (ginfo.format) { // Updated to use ginfo.format instead of ModeInfo->PixelFormat
@@ -229,7 +227,7 @@ Window::Window(RECT rect) : rect(rect) {
 	.sender_pid = 1,
 	.type = MSG_MAKE_WINDOW,
 	.status = 0,
-	.payload{ {gshm.get_id(),pack_u32(rect.x,rect.y), pack_u32(rect.width, rect.height)}},
+	.payload{ {gshm.get_id(),pack_u32(rect.x,rect.y), pack_u32(rect.width, rect.height), pack_u32(ex_style, style),0}},
 	.timestamp = 0
 	};
 	uint64_t result = send_msg(0, &msg);

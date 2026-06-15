@@ -1,5 +1,6 @@
 #ifndef __STDIO_H__
 #define __STDIO_H__
+#include <stddef.h>
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -29,6 +30,20 @@ int fscanf(FILE* stream, const char* fmt, ...);
 int vfscanf(FILE* stream, const char* fmt, va_list ap);
 
 int fflush(FILE* stream);
+int fseek(FILE* stream, long offset, int whence);
+long ftell(FILE* stream);
+void rewind(FILE* stream);
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream);
+int fgetc(FILE* stream);
+int fputc(int c, FILE* stream);
+int ungetc(int c, FILE* stream);
+char* fgets(char* s, int n, FILE* stream);
+int fputs(const char* s, FILE* stream);
+int sprintf(char* buf, const char* fmt, ...);
+int snprintf(char* buf, size_t n, const char* fmt, ...);
+int vsprintf(char* buf, const char* fmt, va_list ap);
+int vsnprintf(char* buf, size_t n, const char* fmt, va_list ap);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

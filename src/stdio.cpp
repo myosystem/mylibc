@@ -23,6 +23,9 @@ int fflush(FILE* stream) {
     if (!stream->dirty || stream->cursor == 0) {
         return 0;
     }
+    if (stream->fd == (uint64_t)-2) {
+        return 0; // string sink: nothing to flush to fd
+    }
     int64_t written = write(stream->fd, (const char*)stream->buffer, stream->cursor);
 
     if (written < 0) {
@@ -33,8 +36,9 @@ int fflush(FILE* stream) {
     stream->dirty = 0;
     return 0;
 }
-int fputc(char c, FILE* stream) {
+int fputc(int c, FILE* stream) {
     if (stream->cursor >= stream->bufsize) {
+        if (stream->fd == (uint64_t)-2) return -1; // string buffer full
         if (fflush(stream) != 0) {
             return -1;
         }
@@ -424,4 +428,83 @@ size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream) {
     }
 
     return (total_bytes - bytes_to_read) / size;
+}
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream) {
+    const uint8_t* src = (const uint8_t*)ptr;
+    size_t total = size * nmemb;
+    for (size_t i = 0; i < total; i++) {
+        if (fputc((int)src[i], stream) < 0) return i / size;
+    }
+    return nmemb;
+}
+int fputs(const char* s, FILE* stream) {
+    while (*s) {
+        if (fputc((unsigned char)*s++, stream) < 0) return -1;
+    }
+    return 0;
+}
+char* fgets(char* s, int n, FILE* stream) {
+    if (n <= 0) return nullptr;
+    int i = 0;
+    while (i < n - 1) {
+        int c = fgetc(stream);
+        if (c < 0) break;
+        s[i++] = (char)c;
+        if (c == '\n') break;
+    }
+    if (i == 0) return nullptr;
+    s[i] = '\0';
+    return s;
+}
+int fseek(FILE* stream, long offset, int whence) {
+    fflush(stream);
+    stream->cursor = 0;
+    stream->limit = 0;
+    stream->unget_count = 0;
+    return lseek(stream->fd, (off_t)offset, whence) < 0 ? -1 : 0;
+}
+long ftell(FILE* stream) {
+    if (stream->dirty) fflush(stream);
+    off_t pos = lseek(stream->fd, 0, SEEK_CUR);
+    if (pos < 0) return -1L;
+    // subtract unconsumed bytes in the read-ahead buffer
+    pos -= (off_t)(stream->limit - stream->cursor);
+    pos -= (off_t)stream->unget_count;
+    return (long)pos;
+}
+void rewind(FILE* stream) {
+    fseek(stream, 0L, SEEK_SET);
+}
+int vsnprintf(char* buf, size_t n, const char* fmt, va_list ap) {
+    if (n == 0) return 0;
+    FILE sf;
+    sf.buffer = (uint8_t*)buf;
+    sf.bufsize = n - 1; // reserve 1 byte for null terminator
+    sf.cursor = 0;
+    sf.fd = (uint64_t)-2; // string sink sentinel
+    sf.dirty = 0;
+    sf.limit = 0;
+    sf.flags = 0;
+    sf.unget_count = 0;
+    sf.ungetc_buf = 0;
+    int ret = vfprintf(&sf, fmt, ap);
+    buf[sf.cursor] = '\0';
+    return ret;
+}
+int snprintf(char* buf, size_t n, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int ret = vsnprintf(buf, n, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+int vsprintf(char* buf, const char* fmt, va_list ap) {
+    return vsnprintf(buf, (size_t)-1, fmt, ap);
+}
+int sprintf(char* buf, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int ret = vsprintf(buf, fmt, ap);
+    va_end(ap);
+    return ret;
 }

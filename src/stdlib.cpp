@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <vector>
 #define PAGE_SIZE 4096
 #define MMAP_THRESHOLD (128 * 1024) // 128KiB 이상이면 mmap 사용
@@ -218,6 +219,28 @@ void free(void* ptr) {
         if (chunk_heads[head->level] == head) chunk_heads[head->level] = head->next;
         syscall_munmap(head, head->page_count * PAGE_SIZE);
     }
+}
+void* realloc(void* ptr, size_t size) {
+    if (!ptr) return malloc(size);
+    if (size == 0) { free(ptr); return nullptr; }
+
+    slot_header* sh = (slot_header*)ptr - 1;
+    size_t old_size;
+    if (sh->chunk_ptr == ~0ULL) {
+        // mmap block: reserved == total (including MMapHeader)
+        old_size = sh->reserved - sizeof(MMapHeader);
+    } else {
+        chunk_header* head = (chunk_header*)sh->chunk_ptr;
+        old_size = 1ULL << (head->level + 4);
+    }
+
+    if (size <= old_size) return ptr;
+
+    void* newptr = malloc(size);
+    if (!newptr) return nullptr;
+    memcpy(newptr, ptr, old_size);
+    free(ptr);
+    return newptr;
 }
 static std::vector<void(*)()> atexit_handlers;
 
