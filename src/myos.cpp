@@ -51,6 +51,11 @@ uint64_t get_tsc() {
 	);
 	return ret; // return value in rax
 }
+uint64_t get_cycles() {
+	uint64_t ret;
+	__asm__ __volatile__("int 0x80" : "=a"(ret) : "a"(0x07), "D"(7) : "rcx", "r11", "memory");
+	return ret;
+}
 uint64_t get_memory_size() {
 	uint64_t ret;
 	__asm__ __volatile__(

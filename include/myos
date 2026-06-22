@@ -127,6 +127,7 @@ struct POINT {
     int64_t y;
 };
 uint64_t get_tsc();
+uint64_t get_cycles();
 uint64_t get_memory_size();
 uint64_t get_used_memory_size();
 uint64_t get_free_memory_size();
