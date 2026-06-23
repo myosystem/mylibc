@@ -17,4 +17,10 @@ pid_t fork(void);
 void _exit(int status);
 int dup2(int oldfd, int newfd);
 int dup3(int oldfd, int newfd, int flags);
+int execv(const char* path, char* const argv[]);
+int execve(const char* path, char* const argv[], char* const envp[]);
+int execvp(const char* file, char* const argv[]);
+int execl(const char* path, const char* arg, ...);
+int execle(const char* path, const char* arg, ...);
+int execlp(const char* file, const char* arg, ...);
 #endif /*__UNISTD_H__*/

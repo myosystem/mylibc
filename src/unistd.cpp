@@ -77,3 +77,13 @@ void _exit(int status) {
         : "rcx", "r11", "memory"
         );
 }
+__attribute__((naked, noinline))
+int execv(const char* path, char* const argv[]) {
+    __asm__ __volatile__(
+        "int 0x80;"
+        "ret;"
+        :
+        : "a"(31)
+        : "rcx", "r11", "memory"
+    );
+}
