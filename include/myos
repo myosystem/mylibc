@@ -72,11 +72,13 @@ typedef struct {
 } __attribute__((packed)) msg_t;
 enum {
     WINDOW_NOHEADER = 0b1,
+    WINDOW_NOBORDER = 0b10,
 
 };
 enum {
     WINDOW_EX_GUI = 0b1,
 };
+#define PIXEL_TRANSPARENT (1u << 24)
 uint64_t send_msg(uint64_t dest_pid, const msg_t* msg, bool is_block = true);
 uint64_t receive_msg(msg_t* msg);
 void wait_for_msg();
