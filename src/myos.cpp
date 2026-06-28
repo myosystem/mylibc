@@ -14,8 +14,11 @@ struct _FILE {
 };
 extern "C" __attribute__((naked, section(".entry"))) void _start() {
 	__asm__ __volatile__(
-		"sub rsp, 32\n\t"
+		"push rdi\n\t"
+		"push rsi\n\t"
 		"call _before_main\n\t"
+		"pop rsi\n\t"
+		"pop rdi\n\t"
 		"call main\n\t"
 		"mov rdi, rax\n\t"
 		"call _after_main\n\t"
