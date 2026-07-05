@@ -87,3 +87,13 @@ int execv(const char* path, char* const argv[]) {
         : "rcx", "r11", "memory"
     );
 }
+__attribute__((naked, noinline))
+int chdir(const char* path) {
+    __asm__ __volatile__(
+        "int 0x80;"
+        "ret;"
+        :
+        : "a"(35)
+        : "rcx", "r11", "memory"
+    );
+}

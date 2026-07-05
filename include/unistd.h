@@ -23,4 +23,5 @@ int execvp(const char* file, char* const argv[]);
 int execl(const char* path, const char* arg, ...);
 int execle(const char* path, const char* arg, ...);
 int execlp(const char* file, const char* arg, ...);
+int chdir(const char* path);
 #endif /*__UNISTD_H__*/
