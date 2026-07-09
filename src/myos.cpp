@@ -238,6 +238,8 @@ Window::Window(RECT rect, uint32_t style, uint32_t ex_style) : rect(rect) {
 	.payload{ {gshm.get_id(),pack_u32(rect.x,rect.y), pack_u32(rect.width, rect.height), pack_u32(ex_style, style),0}},
 	.timestamp = 0
 	};
+	this->rect.x = 0;
+	this->rect.y = 0;
 	uint64_t result = send_msg(0, &msg);
 	printf("Code %d: Sent MSG_MAKE_WINDOW with shared memory id %d, result=%d\n", (int)msg.type, (int)gshm.get_id(), (int)result);
 	wait_for_msg();
