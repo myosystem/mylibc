@@ -24,5 +24,5 @@ int Pipe::read(void* buf, uint32_t len) {
     return ::read(read_fd, buf, len);
 }
 int Pipe::write(const void* buf, uint32_t len) {
-
+    return ::write(write_fd, buf, len);
 }

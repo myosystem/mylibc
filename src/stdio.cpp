@@ -12,7 +12,7 @@ struct _FILE {
 	uint8_t* buffer;
 	uint64_t bufsize;
 	uint64_t cursor;
-    uint64_t fd;
+    int64_t fd;
 	uint64_t flags;
     uint64_t limit;
 	uint32_t ungetc_buf;

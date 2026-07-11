@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SRCS src/*.cpp include/*.h)
+file(GLOB_RECURSE SRCS CONFIGURE_DEPENDS src/*.cpp include/*)
 
 add_library(mylibc STATIC ${SRCS})
 
