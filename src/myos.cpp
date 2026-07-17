@@ -113,7 +113,15 @@ void shutdown() {
 	__asm__ __volatile__(
 		"int 0x80"
 		:
-	: "a"(-1ull)
+	: "a"(-1ull), "D"(0)
+		: "rcx", "r11", "memory"
+		);
+}
+void reboot() {
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+	: "a"(-1ull), "D"(1)
 		: "rcx", "r11", "memory"
 		);
 }
@@ -247,6 +255,16 @@ Window::Window(RECT rect, uint32_t style, uint32_t ex_style) : rect(rect) {
 	receive_msg(&response);
 
 }
+void Window::rezorder() {
+	msg_t msg{
+		.sender_pid = 1,
+		.type = MSG_REZORDER,
+		.status = 0,
+		.payload{ {0,0,0,0,0}},
+		.timestamp = 0
+	};
+	uint64_t result = send_msg(0, &msg);
+}
 void Window::draw_frame(RECT rect) {
 	if (gbuf == nullptr) return;
 	msg_t msg{
@@ -258,6 +276,37 @@ void Window::draw_frame(RECT rect) {
 
 	};
 	uint64_t result = send_msg(0, &msg);
+}
+void Window::destroy() {
+	msg_t msg{ .sender_pid = 1, .type = MSG_DESTROY_WINDOW, .status = 0, .payload{ {gshm.get_id(),0,0,0,0} }, .timestamp = 0 };
+	send_msg(0, &msg);
+}
+Console::Console() : Console(get_pid()) {
+}
+Console::Console(pid_t pid) {
+	console_pid = pid;
+}
+pid_t Console::get_pid() {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(29), "D"(1)
+		: "rcx", "r11", "memory"
+	);
+	return ret; // return value in rax
+}
+pid_t Console::get_pid(pid_t pid) {
+	return -1; // 나중에 msg로 구현
+}
+void Console::set_pid(pid_t pid) {
+	uint64_t ret;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(ret)
+		: "a"(29), "D"(0), "S"(pid)
+		: "rcx", "r11", "memory"
+	);
 }
 FILE* stdout;
 FILE* stdin;
@@ -297,9 +346,7 @@ extern "C" void _before_main() {
 	stderr->limit = 0;
 }
 extern "C" void _after_main(int exit_code) {
-	fclose(stdout);
 	fclose(stdin);
-	fclose(stderr);
 	exit(exit_code);
 }
 extern "C" void* __dso_handle = nullptr;

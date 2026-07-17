@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <vector>
 #include <mutex>
+#include <sys/types.h>
 enum {
     MSG_NONE = 0,
 
@@ -23,12 +24,30 @@ enum {
     MSG_MAKE_WINDOW = MSG_GUI_BASE + 1,
     MSG_DESTROY_WINDOW = MSG_GUI_BASE + 2,
     MSG_DRAW_FRAME = MSG_GUI_BASE + 3,
+	MSG_WINDOW_RESIZE = MSG_GUI_BASE + 4,
+	MSG_WINDOW_MOVE = MSG_GUI_BASE + 5,
+	MSG_WINDOW_FOCUS = MSG_GUI_BASE + 6,
+	MSG_REZORDER = MSG_GUI_BASE + 7,
+
     MSG_MOUSE_MOVE = MSG_GUI_BASE + 0x100,
     MSG_MOUSE_LCLICK = MSG_GUI_BASE + 0x101,
     MSG_MOUSE_RCLICK = MSG_GUI_BASE + 0x102,
     MSG_MOUSE_SCROLL = MSG_GUI_BASE + 0x103,
     MSG_MOUSE_LRELEASE = MSG_MOUSE_LCLICK + 0x10,
     MSG_MOUSE_RRELEASE = MSG_MOUSE_RCLICK + 0x10,
+
+	MSG_CONSOLE_BASE = 0x4000,
+	MSG_CONSOLE_CLEAR = MSG_CONSOLE_BASE + 1,
+	MSG_CONSOLE_MODE_SET = MSG_CONSOLE_BASE + 2,
+	MSG_CONSOLE_MODE_GET = MSG_CONSOLE_BASE + 3,
+	MSG_CONSOLE_SIZE_SET = MSG_CONSOLE_BASE + 4,
+	MSG_CONSOLE_SIZE_GET = MSG_CONSOLE_BASE + 5,
+	MSG_CONSOLE_CURSOR_SET = MSG_CONSOLE_BASE + 6,
+	MSG_CONSOLE_CURSOR_GET = MSG_CONSOLE_BASE + 7,
+};
+enum {
+	CONSOLE_MODE_CANONICAL = 0,
+	CONSOLE_MODE_RAW = 1,
 };
 enum {
     KEY_LSHIFT = 0x101,
@@ -84,7 +103,8 @@ uint64_t receive_msg(msg_t* msg);
 void wait_for_msg();
 void sleep(uint64_t ms);
 void shutdown();
-uint64_t set_timer(uint64_t timeout_ms,uint64_t interval_ms = 0);
+void reboot();
+uint64_t set_timer(uint64_t timeout_ms, uint64_t interval_ms = 0);
 void cancel_timer(uint64_t timer_id);
 class SharedMem {
 private:
@@ -92,10 +112,10 @@ private:
     uint64_t size;
 public:
     SharedMem();
-	void* create(uint64_t size);
-	void* accept(uint64_t id);
-	uint64_t get_id() const;
-	uint64_t get_size() const;
+    void* create(uint64_t size);
+    void* accept(uint64_t id);
+    uint64_t get_id() const;
+    uint64_t get_size() const;
 };
 static inline uint64_t pack_u32(uint32_t hi, uint32_t lo) {
     return ((uint64_t)hi << 32) | (uint64_t)lo;
@@ -140,15 +160,28 @@ uint64_t display_frame(void* frame_buffer);
 class Window {
 private:
 public: // 임시
-	RECT rect;
-	SharedMem gshm; // 그래픽 버퍼를 위한 공유 메모리
+    RECT rect;
+    SharedMem gshm; // 그래픽 버퍼를 위한 공유 메모리
     void* gbuf; // 그래픽 버퍼
-	static Ginfo ginfo; // screen info
-	static once_flag ginfo_once_flag;
+    static Ginfo ginfo; // screen info
+    static once_flag ginfo_once_flag;
     static uint64_t bytesPerPixel;
 public:
     Window(RECT rect, uint32_t style = 0, uint32_t ex_style = 0);
-	Window(const Window&) = delete;
-	void draw_frame(RECT rect);
+    Window(const Window&) = delete;
+    void draw_frame(RECT rect);
+    void destroy();
+    static void rezorder();
+};
+class Console {
+private:
+    pid_t console_pid;
+public:
+    Console();
+    Console(pid_t pid);
+	pid_t cid() const { return console_pid; }
+    static pid_t get_pid();
+    static pid_t get_pid(pid_t pid);
+	static void set_pid(pid_t pid);
 };
 #endif // __MYOS__
