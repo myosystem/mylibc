@@ -14,6 +14,7 @@ ssize_t write(int fd, const void* buf, size_t count);
 int close(int fd);
 off_t lseek(int fd, off_t offset, int whence);
 pid_t fork(void);
+pid_t getpid(void);
 void _exit(int status);
 int dup2(int oldfd, int newfd);
 int dup3(int oldfd, int newfd, int flags);
@@ -24,4 +25,8 @@ int execl(const char* path, const char* arg, ...);
 int execle(const char* path, const char* arg, ...);
 int execlp(const char* file, const char* arg, ...);
 int chdir(const char* path);
+int mkdir(const char* path);
+int unlink(const char* path);
+int rmdir(const char* path);
+int poll_register(int fd, int opts);
 #endif /*__UNISTD_H__*/

@@ -57,6 +57,16 @@ off_t lseek(int fd, off_t offset, int whence) {
     );
 }
 __attribute__((naked, noinline))
+pid_t getpid(void) {
+    __asm__ __volatile__(
+        "int 0x80;"
+        "ret;"
+        :
+    : "a"(3)
+        : "rcx", "r11", "memory"
+        );
+}
+__attribute__((naked, noinline))
 pid_t fork(void) {
     __asm__ __volatile__(
         "int 0x80;"
@@ -96,4 +106,51 @@ int chdir(const char* path) {
         : "a"(35)
         : "rcx", "r11", "memory"
     );
+}
+__attribute__((noinline))
+int mkdir(const char* path) {
+    int result;
+    __asm__ __volatile__(
+        "int 0x80;"
+        : "=a"(result)
+        : "a"(8), "D"(3), "S"(path)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+__attribute__((noinline))
+int unlink(const char* path) {
+    int result;
+    __asm__ __volatile__(
+        "int 0x80;"
+        : "=a"(result)
+        : "a"(8), "D"(4), "S"(path)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+__attribute__((noinline))
+int rmdir(const char* path) {
+    int result;
+    __asm__ __volatile__(
+        "int 0x80;"
+        : "=a"(result)
+        : "a"(8), "D"(5), "S"(path)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+__attribute__((noinline))
+int poll_register(int fd, int opts) {
+    int result;
+    __asm__ __volatile__(
+        "int 0x80;"
+        : "=a"(result)
+        : "a"(8), "D"(6), "S"(fd), "d"(opts)
+        : "rcx", "r11", "memory"
+    );
+    return result;
 }
