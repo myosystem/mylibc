@@ -12,6 +12,8 @@ public:
     int write(const void* buf, uint32_t len);
     void close_read();
     void close_write();
+    int get_read_fd() const { return read_fd; }
+    int get_write_fd() const { return write_fd; }
     void redirect_stdin() { dup2(read_fd, 0); }
     void redirect_stdout() { dup2(write_fd, 1); }
 };
