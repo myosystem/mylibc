@@ -10,6 +10,8 @@ void free(void* ptr);
 void exit(int status);
 int atexit(void (*func)(void));
 int __cxa_atexit(void (*func)(void*), void* arg, void* dso);
+int atoi(const char* str);
+long strtol(const char* str, char** endptr, int base);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

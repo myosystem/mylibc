@@ -268,7 +268,27 @@ void exit(int status) {
     for (int i = atexit_handlers.size() - 1; i >= 0; i--) {
         atexit_handlers[i]();
     }
-    fflush(stdout);
-    fflush(stderr);
+    fclose(stdout);
+    fclose(stderr);
     _exit(status);
+}
+int atoi(const char* str) {
+	int result = 0;
+	bool sign = 1;
+	while (*str == ' ' || *str == '\t') str++;
+	if (*str == '-') {
+		sign = -1;
+		str++;
+	}
+	else if (*str == '+') {
+		str++;
+	}
+	while (*str >= '0' && *str <= '9') {
+		result = result * 10 + (*str - '0');
+		str++;
+	}
+	return sign ? result : -result;
+}
+long strtol(const char* str, char** endptr, int base) {
+    return 0;
 }
