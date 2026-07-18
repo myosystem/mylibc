@@ -42,7 +42,7 @@ uint64_t receive_msg(msg_t* msg) {
 		: "a"(0x04), "D"(1), "S"((uint64_t)msg)
 		: "rcx", "r11", "memory"
 	);
-	return ret; // return value in rax (¸Ş½ÃÁö ¼ö½Å ¼º°ø ¿©ºÎ)
+	return ret; // return value in rax (ë©”ì‹œì§€ ìˆ˜ì‹  ì„±ê³µ ì—¬ë¶€)
 }
 uint64_t get_tsc() {
 	uint64_t ret;
@@ -67,7 +67,7 @@ uint64_t get_memory_size() {
 		: "a"(0x07), "D"(2)
 		: "rcx", "r11", "memory"
 	);
-	return ret * 4096; // return value in rax (B ´ÜÀ§)
+	return ret * 4096; // return value in rax (B ë‹¨ìœ„)
 }
 uint64_t get_used_memory_size() {
 	uint64_t ret;
@@ -77,7 +77,7 @@ uint64_t get_used_memory_size() {
 		: "a"(0x07), "D"(3)
 		: "rcx", "r11", "memory"
 	);
-	return ret * 4096; // return value in rax (B ´ÜÀ§)
+	return ret * 4096; // return value in rax (B ë‹¨ìœ„)
 }
 uint64_t get_free_memory_size() {
 	uint64_t ret;
@@ -87,7 +87,7 @@ uint64_t get_free_memory_size() {
 		: "a"(0x07), "D"(4)
 		: "rcx", "r11", "memory"
 	);
-	return ret * 4096; // return value in rax (B ´ÜÀ§)
+	return ret * 4096; // return value in rax (B ë‹¨ìœ„)
 }
 uint64_t get_process_count() {
 	uint64_t ret;
@@ -97,7 +97,7 @@ uint64_t get_process_count() {
 		: "a"(0x07), "D"(5)
 		: "rcx", "r11", "memory"
 	);
-	return ret; // return value in rax (B ´ÜÀ§)
+	return ret; // return value in rax (B ë‹¨ìœ„)
 }
 uint64_t get_max_process_count() {
 	uint64_t ret;
@@ -107,7 +107,7 @@ uint64_t get_max_process_count() {
 		: "a"(0x07), "D"(6)
 		: "rcx", "r11", "memory"
 	);
-	return ret; // return value in rax (B ´ÜÀ§)
+	return ret; // return value in rax (B ë‹¨ìœ„)
 }
 void shutdown() {
 	__asm__ __volatile__(
@@ -149,7 +149,7 @@ uint64_t set_timer(uint64_t timeout_ms, uint64_t interval_ms) {
 		: "a"(0x06), "D"(0x35), "S"(timeout_ms), "d"(interval_ms)
 		: "rcx", "r11", "memory"
 	);
-	return ret; // return value in rax (Å¸ÀÌ¸Ó ID)
+	return ret; // return value in rax (íƒ€ì´ë¨¸ ID)
 }
 void cancel_timer(uint64_t timer_id) {
 	__asm__ __volatile__(
@@ -170,8 +170,8 @@ void* SharedMem::create(uint64_t size) {
 		: "a"(15), "D"(size), "S"(this)
 		: "rcx", "r11", "memory"
 	);
-	if (ret == 0) return nullptr; // ½ÇÆĞ
-	return (void*)(uintptr_t)ret; // ¹İÈ¯°ªÀº °øÀ¯ ¸Ş¸ğ¸®ÀÇ °¡»ó ÁÖ¼Ò
+	if (ret == 0) return nullptr; // ì‹¤íŒ¨
+	return (void*)(uintptr_t)ret; // ë°˜í™˜ê°’ì€ ê³µìœ  ë©”ëª¨ë¦¬ì˜ ê°€ìƒ ì£¼ì†Œ
 }
 
 void* SharedMem::accept(uint64_t id) {
@@ -182,8 +182,8 @@ void* SharedMem::accept(uint64_t id) {
 		: "a"(16), "D"(id), "S"(this)
 		: "rcx", "r11", "memory"
 	);
-	if (ret == 0) return nullptr; // ½ÇÆĞ
-	return (void*)(uintptr_t)ret; // ¹İÈ¯°ªÀº °øÀ¯ ¸Ş¸ğ¸®ÀÇ °¡»ó ÁÖ¼Ò
+	if (ret == 0) return nullptr; // ì‹¤íŒ¨
+	return (void*)(uintptr_t)ret; // ë°˜í™˜ê°’ì€ ê³µìœ  ë©”ëª¨ë¦¬ì˜ ê°€ìƒ ì£¼ì†Œ
 }
 uint64_t get_ginfo(Ginfo* ginfo) {
 	uint64_t ret;
@@ -297,7 +297,7 @@ pid_t Console::get_pid() {
 	return ret; // return value in rax
 }
 pid_t Console::get_pid(pid_t pid) {
-	return -1; // ³ªÁß¿¡ msg·Î ±¸Çö
+	return -1; // ë‚˜ì¤‘ì— msgë¡œ êµ¬í˜„
 }
 void Console::set_pid(pid_t pid) {
 	uint64_t ret;
@@ -315,8 +315,8 @@ extern "C" void _before_main() {
 	stdout = (FILE*)malloc(sizeof(FILE));
 	stdin = (FILE*)malloc(sizeof(FILE));
 	stderr = (FILE*)malloc(sizeof(FILE));
-	stdout->fd = 1; // Ç¥ÁØ Ãâ·Â
-	stdout->buffer = (uint8_t*)malloc(1024); // ¹öÆÛ ÇÒ´ç
+	stdout->fd = 1; // í‘œì¤€ ì¶œë ¥
+	stdout->buffer = (uint8_t*)malloc(1024); // ë²„í¼ í• ë‹¹
 	stdout->bufsize = 1024;
 	stdout->cursor = 0;
 	stdout->flags = _IOLBF;
@@ -325,21 +325,21 @@ extern "C" void _before_main() {
 	stdout->unget_count = 0;
 	stdout->limit = 1024;
 
-	stdin->fd = 0; // Ç¥ÁØ ÀÔ·Â
-	stdin->buffer = (uint8_t*)malloc(1024); // ¹öÆÛ ÇÒ´ç
+	stdin->fd = 0; // í‘œì¤€ ì…ë ¥
+	stdin->buffer = (uint8_t*)malloc(1024); // ë²„í¼ í• ë‹¹
 	stdin->bufsize = 1024;
 	stdin->cursor = 0;
-	stdin->flags = _IOFBF; // ¹öÆÛ¸µ ¾øÀ½
+	stdin->flags = _IOFBF; // ë²„í¼ë§ ì—†ìŒ
 	stdin->dirty = 0;
 	stdin->ungetc_buf = 0;
 	stdin->unget_count = 0;
-	stdin->limit = 0; // ¾ÆÁ÷ ÀĞÀ»°Ô ¾øÀ½
+	stdin->limit = 0; // ì•„ì§ ì½ì„ê²Œ ì—†ìŒ
 
-	stderr->fd = 2; // Ç¥ÁØ ¿À·ù
-	stderr->buffer = nullptr; // ¹öÆÛ ÇÒ´ç
+	stderr->fd = 2; // í‘œì¤€ ì˜¤ë¥˜
+	stderr->buffer = nullptr; // ë²„í¼ í• ë‹¹
 	stderr->bufsize = 0;
 	stderr->cursor = 0;
-	stderr->flags = _IONBF; // ¶óÀÎ ¹öÆÛ¸µ
+	stderr->flags = _IONBF; // ë¼ì¸ ë²„í¼ë§
 	stderr->dirty = 0;
 	stderr->ungetc_buf = 0;
 	stderr->unget_count = 0;

@@ -68,22 +68,22 @@ enum {
 typedef struct {
     uint64_t sender_pid;    // 8 bytes (Explicitly aligned)
     uint32_t type;          // 4 bytes
-    uint32_t status;        // 4 bytes (Å¸ÀÔ ¿·¿¡ »óÅÂ³ª ÇÃ·¡±×¸¦ µÎ¾î 8¹ÙÀÌÆ® ½ÖÀ» ¸ÂÃã)
+    uint32_t status;        // 4 bytes (íƒ€ì… ì˜†ì— ìƒíƒœë‚˜ í”Œë˜ê·¸ë¥¼ ë‘ì–´ 8ë°”ì´íŠ¸ ìŒì„ ë§ì¶¤)
 
     union {
-        // ÀÏ¹İÀûÀÎ Á¤¼öÇü ÀÎÀÚµé
+        // ì¼ë°˜ì ì¸ ì •ìˆ˜í˜• ì¸ìë“¤
         struct {
             uint64_t arg[5];
         } params;
 
-        // °øÀ¯ ¸Ş¸ğ¸®³ª ¹®ÀÚ¿­ Ã³¸®¸¦ À§ÇÑ ±¸Á¶
+        // ê³µìœ  ë©”ëª¨ë¦¬ë‚˜ ë¬¸ìì—´ ì²˜ë¦¬ë¥¼ ìœ„í•œ êµ¬ì¡°
         struct {
             void* addr[3];
             uint64_t size;
             uint64_t flags;
         } memory;
 
-        // µ¥ÀÌÅÍ ÆäÀÌ·Îµå (ÂªÀº ¸Ş½ÃÁö Á÷¼Û¿ë)
+        // ë°ì´í„° í˜ì´ë¡œë“œ (ì§§ì€ ë©”ì‹œì§€ ì§ì†¡ìš©)
         uint8_t raw[40];
     } payload;
 
@@ -159,10 +159,10 @@ uint64_t get_ginfo(Ginfo* ginfo);
 uint64_t display_frame(void* frame_buffer);
 class Window {
 private:
-public: // ÀÓ½Ã
+public: // ì„ì‹œ
     RECT rect;
-    SharedMem gshm; // ±×·¡ÇÈ ¹öÆÛ¸¦ À§ÇÑ °øÀ¯ ¸Ş¸ğ¸®
-    void* gbuf; // ±×·¡ÇÈ ¹öÆÛ
+    SharedMem gshm; // ê·¸ë˜í”½ ë²„í¼ë¥¼ ìœ„í•œ ê³µìœ  ë©”ëª¨ë¦¬
+    void* gbuf; // ê·¸ë˜í”½ ë²„í¼
     static Ginfo ginfo; // screen info
     static once_flag ginfo_once_flag;
     static uint64_t bytesPerPixel;
