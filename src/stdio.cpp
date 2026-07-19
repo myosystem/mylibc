@@ -458,6 +458,10 @@ char* fgets(char* s, int n, FILE* stream) {
 }
 int fseek(FILE* stream, long offset, int whence) {
     fflush(stream);
+    if (whence == SEEK_CUR) {
+        offset -= (long)(stream->limit - stream->cursor);
+        offset -= (long)stream->unget_count;
+    }
     stream->cursor = 0;
     stream->limit = 0;
     stream->unget_count = 0;
