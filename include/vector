@@ -8,9 +8,10 @@ namespace std {
 	template <typename T>
 	class vector {
 	public:
+		typedef size_t size_type;
 		vector() : data_(nullptr), size_(0), capacity_(0) {}
 		~vector() {
-			for (size_t i = 0; i < size_; i++) {
+			for (size_type i = 0; i < size_; i++) {
 				data_[i].~T();
 			}
 			operator delete[](data_);
@@ -19,7 +20,7 @@ namespace std {
 			capacity_ = 0;
 		}
 		void clear() {
-			for (size_t i = 0; i < size_; i++) {
+			for (size_type i = 0; i < size_; i++) {
 				data_[i].~T();
 			}
 			size_ = 0;
@@ -33,23 +34,23 @@ namespace std {
 			new (data_ + size_) T(value);
 			size_++;
 		}
-		T& operator[](size_t index) {
+		T& operator[](size_type index) {
 			return data_[index];
 		}
-		const T& operator[](size_t index) const {
+		const T& operator[](size_type index) const {
 			return data_[index];
 		}
-		size_t size() const { return size_; }
-		size_t capacity() const { return capacity_; }
+		size_type size() const { return size_; }
+		size_type capacity() const { return capacity_; }
 		T* begin() { return data_; }
 		T* end() { return data_ + size_; }
 		reverse_iterator<T*> rbegin() { return reverse_iterator<T*>(data_ + size_); }
 		reverse_iterator<T*> rend() { return reverse_iterator<T*>(data_); }
 		reverse_iterator<const T*> crbegin() const { return reverse_iterator<const T*>(data_ + size_); }
 		reverse_iterator<const T*> crend()   const { return reverse_iterator<const T*>(data_); }
-		T* erase(size_t index) {
+		T* erase(size_type index) {
 			if (index >= size_) return nullptr;
-			for (size_t i = index; i < size_ - 1; i++) {
+			for (size_type i = index; i < size_ - 1; i++) {
 				data_[i].~T();
 				new (data_ + i) T(std::move(data_[i + 1]));
 			}
@@ -72,11 +73,25 @@ namespace std {
 		bool empty() const {
 			return size_ == 0;
 		}
+		void resize(size_type new_size) {
+			if (new_size > capacity_) {
+				while (capacity_ < new_size) {
+					resize();
+				}
+			}
+			for (size_type i = size_; i < new_size; i++) {
+				new (data_ + i) T();
+			}
+			for (size_type i = new_size; i < size_; i++) {
+				data_[i].~T();
+			}
+			size_ = new_size;
+		}
 	private:
 		void resize() {
-			size_t new_capacity = capacity_ == 0 ? 1 : capacity_ * 2;
+			size_type new_capacity = capacity_ == 0 ? 1 : capacity_ * 2;
 			T* new_data = static_cast<T*>(operator new[](new_capacity * sizeof(T)));
-			for (size_t i = 0; i < size_; i++) {
+			for (size_type i = 0; i < size_; i++) {
 				new (new_data + i) T(std::move(data_[i]));
 				data_[i].~T();
 			}
@@ -85,8 +100,8 @@ namespace std {
 			capacity_ = new_capacity;
 		}
 		T* data_;
-		size_t size_;
-		size_t capacity_;
+		size_type size_;
+		size_type capacity_;
 	};
 }
 #endif /*__VECTOR__*/
