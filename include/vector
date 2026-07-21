@@ -10,6 +10,32 @@ namespace std {
 	public:
 		typedef size_t size_type;
 		vector() : data_(nullptr), size_(0), capacity_(0) {}
+		explicit vector(size_t n) : data_(nullptr), size_(0), capacity_(0) { resize(n); }
+		vector(const vector& o) : data_(nullptr), size_(0), capacity_(0) {
+			reserve(o.size_);
+			for (size_t i = 0; i < o.size_; i++) { new (data_ + i) T(o.data_[i]); size_++; }
+		}
+		vector(vector&& o) noexcept : data_(o.data_), size_(o.size_), capacity_(o.capacity_) {
+			o.data_ = nullptr; o.size_ = 0; o.capacity_ = 0;
+		}
+		vector& operator=(const vector& o) {
+			if (this != &o) {
+				for (size_t i = 0; i < size_; i++) data_[i].~T();
+				size_ = 0;
+				reserve(o.size_);
+				for (size_t i = 0; i < o.size_; i++) { new (data_ + i) T(o.data_[i]); size_++; }
+			}
+			return *this;
+		}
+		vector& operator=(vector&& o) noexcept {
+			if (this != &o) {
+				for (size_t i = 0; i < size_; i++) data_[i].~T();
+				operator delete[](data_);
+				data_ = o.data_; size_ = o.size_; capacity_ = o.capacity_;
+				o.data_ = nullptr; o.size_ = 0; o.capacity_ = 0;
+			}
+			return *this;
+		}
 		~vector() {
 			for (size_type i = 0; i < size_; i++) {
 				data_[i].~T();
@@ -72,6 +98,9 @@ namespace std {
 		}
 		bool empty() const {
 			return size_ == 0;
+		}
+		void reserve(size_type n) {
+			while (capacity_ < n) resize();
 		}
 		void resize(size_type new_size) {
 			if (new_size > capacity_) {
