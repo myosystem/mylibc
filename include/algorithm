@@ -1,5 +1,6 @@
 #ifndef __ALGORITHM__
 #define __ALGORITHM__
+#include <utility>
 
 namespace std
 {
@@ -25,6 +26,38 @@ namespace std
             else if (first == middle) middle = next;
         }
         return first;
+    }
+    template <typename Iter, typename Compare>
+    void sort(Iter first, Iter last, Compare comp) {
+        while (last - first > 16) {
+            Iter mid = first + (last - first) / 2;
+            if (comp(*mid, *first)) iter_swap(mid, first);
+            if (comp(*(last - 1), *mid)) {
+                iter_swap(last - 1, mid);
+                if (comp(*mid, *first)) iter_swap(mid, first);
+            }
+            auto pivot = *mid;
+            Iter i = first, j = last - 1;
+            while (i <= j) {
+                while (comp(*i, pivot)) ++i;
+                while (comp(pivot, *j)) --j;
+                if (i <= j) { iter_swap(i, j); ++i; --j; }
+            }
+            if (j - first < last - i) { sort(first, j + 1, comp); first = i; }
+            else { sort(i, last, comp); last = j + 1; }
+        }
+        if (last - first < 2) return;
+        for (Iter i = first + 1; i < last; ++i) {
+            auto key = move(*i);
+            Iter j = i;
+            while (j > first && comp(key, *(j - 1))) { *j = move(*(j - 1)); --j; }
+            *j = move(key);
+        }
+    }
+
+    template <typename Iter>
+    void sort(Iter first, Iter last) {
+        sort(first, last, [](const auto& a, const auto& b) { return a < b; });
     }
 }
 
