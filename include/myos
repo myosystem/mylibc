@@ -4,6 +4,7 @@
 #include <vector>
 #include <mutex>
 #include <sys/types.h>
+#include <stdio.h>
 enum {
     MSG_NONE = 0,
 
@@ -183,5 +184,39 @@ public:
     static pid_t get_pid();
     static pid_t get_pid(pid_t pid);
 	static void set_pid(pid_t pid);
+};
+
+// ── TrueType 폰트 파서 + 글리프 래스터라이저 ──
+struct OffsetSubtable { uint32_t scalerType; uint16_t numTables, searchRange, entrySelector, rangeShift; };
+struct TableRecord { char tag[4]; uint32_t checksum, offset, length; };
+struct HeadTable { char majorVersion[2], minorVersion[2], fontRevision[4], checkSumAdjustment[4], magicNumber[4], flags[2], unitsPerEm[2], created[8], modified[8], xMin[2], yMin[2], xMax[2], yMax[2], macStyle[2], lowestRecPPEM[2], fontDirectionHint[2], indexToLocFormat[2], glyphDataFormat[2]; };
+struct MaxpTable { char version[4], numGlyphs[2], maxPoints[2], maxContours[2], maxComponentPoints[2], maxComponentContours[2], maxZones[2], maxTwilightPoints[2], maxStorage[2], maxFunctionDefs[2], maxInstructionDefs[2], maxStackElements[2], maxSizeOfInstructions[2], maxComponentElements[2], maxComponentDepth[2]; };
+struct GlyfHeader { char numberOfContours[2], xMin[2], yMin[2], xMax[2], yMax[2]; };
+
+class Font {
+protected:
+    static constexpr int BEZIER_STEPS = 8;
+    static uint16_t swap16(uint16_t v);
+    static uint32_t swap32(uint32_t v);
+    FILE* f = nullptr; OffsetSubtable header = {};
+    uint16_t unitsPerEm = 0, locFormat = 0, numGlyphs = 0; uint32_t locaoffset = 0, glyphIndex = 0;
+    int16_t fontXMin = 0, fontYMin = 0;   // head 전역 bbox 최소값 (음수 보정/베이스라인 통일용)
+    std::vector<uint16_t> endCodes, startCodes, idRangeOffsets, glyphIdArray; std::vector<int16_t> idDeltas;
+    struct GlyphPoint { int x, y; bool onCurve; };
+    struct Glyph { GlyphPoint p1, p2, p3; };
+    // ── 내부 파이프라인 (문자열 그리기는 draw() 하나로) ──
+    uint16_t getGlyphIndex(uint16_t unicode);
+    uint32_t getGlyphOffset(uint16_t gi);
+    static std::vector<uint8_t> downsample(const bool* src, int srcStride, int srcW, int srcH, int dstW, int dstH);
+    bool drawGlyph(uint32_t glyphoffset, uint32_t* bitmap, uint64_t bw, uint64_t bh);
+public:
+    Font(const char* path);
+    ~Font();
+    uint16_t getUnitsPerEm() const;
+    // text를 buf(w*h, ARGB)에 그림. px=글자 높이(0이면 h), advance=글자당 가로 전진(0이면 px, 모노스페이스),
+    // (x,y)=시작 좌상단, color=글자색(0xRRGGBB). '\n'이면 줄바꿈. 안티에일리어싱 알파블렌딩(정수).
+    void draw(const char* text, uint32_t* buf, uint64_t w, uint64_t h,
+              uint64_t px = 0, uint64_t advance = 0,
+              int64_t x = 0, int64_t y = 0, uint32_t color = 0x000000);
 };
 #endif // __MYOS__
