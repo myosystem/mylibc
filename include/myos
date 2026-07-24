@@ -219,4 +219,20 @@ public:
               uint64_t px = 0, uint64_t advance = 0,
               int64_t x = 0, int64_t y = 0, uint32_t color = 0x000000);
 };
+
+// ── Window에 문자열을 그려주는 그리기 컨텍스트 (글리프 커버리지 lazy 캐시) ──
+class WinDraw {
+private:
+    Window* win;                   // 그릴 대상 (win->gbuf)
+    Font*   font;                  // 폰트 (소유 안 함)
+    uint64_t cellW, cellH;         // 글자 셀 크기(px)
+    std::vector<uint8_t*> cache;   // [코드포인트] → 커버리지 셀(폭*cellH), nullptr=미로드
+    uint8_t* getGlyph(uint32_t cp);   // 필요 시 렌더 후 캐시, 커버리지 반환 (더블폭이면 폭=2*cellW)
+public:
+    WinDraw(Window* w, Font* f, uint64_t cellW, uint64_t cellH);
+    ~WinDraw();
+    WinDraw(const WinDraw&) = delete;
+    void drawText(int64_t x, int64_t y, const char* text, uint32_t color = 0xFFFFFF);
+};
+
 #endif // __MYOS__
