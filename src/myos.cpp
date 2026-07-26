@@ -535,3 +535,51 @@ void Font::draw(const char* text, uint32_t* buf, uint64_t w, uint64_t h,
         penX += (int64_t)advance;
     }
 }
+
+// ── WinDraw: 글리프 커버리지를 lazy 캐시하고 Window에 문자열을 그림 ──
+WinDraw::WinDraw(Window* w, Font* f, uint64_t cw, uint64_t ch) : win(w), font(f), cellW(cw), cellH(ch) {}
+WinDraw::~WinDraw() {
+    for (uint64_t i = 0; i < cache.size(); i++) if (cache[i]) delete[] cache[i];
+}
+uint8_t* WinDraw::getGlyph(uint32_t cp) {
+    if (!font || cellW == 0 || cellH == 0) return nullptr;
+    if (cp >= cache.size()) cache.resize(cp + 1);        // 새 칸은 nullptr로 초기화
+    if (cache[cp]) return cache[cp];                      // 캐시 히트
+    uint64_t cw = cp_is_wide(cp) ? cellW * 2 : cellW;     // 한글/CJK는 2셀 폭
+    // 미스: 흰 배경에 검정 글자로 1회 렌더 → 커버리지 추출
+    std::vector<uint32_t> tmp; tmp.resize(cw * cellH);
+    for (uint64_t i = 0; i < cw * cellH; i++) tmp[i] = 0x00FFFFFF;
+    char s[5]; int n = utf8_encode(cp, s); s[n] = 0;
+    font->draw(s, &tmp[0], cw, cellH, cellH, cw, 0, 0, 0x000000);
+    uint8_t* cov = new uint8_t[cw * cellH];
+    for (uint64_t i = 0; i < cw * cellH; i++) cov[i] = (uint8_t)(255 - (tmp[i] & 0xFF));
+    cache[cp] = cov;
+    return cov;
+}
+void WinDraw::drawText(int64_t x, int64_t y, const char* text, uint32_t color) {
+    if (!win || !font || !text) return;
+    uint32_t* fb = (uint32_t*)win->gbuf; if (!fb) return;
+    int64_t W = (int64_t)win->rect.width, H = (int64_t)win->rect.height;
+    uint8_t cr = (color >> 16) & 0xFF, cg = (color >> 8) & 0xFF, cb = color & 0xFF;
+    int64_t penX = x, penY = y;
+    for (const char* p = text; *p; ) {
+        if (*p == '\n') { penX = x; penY += (int64_t)cellH; ++p; continue; }
+        int clen; uint32_t cp = utf8_next(p, &clen); p += clen;
+        uint64_t cw = cp_is_wide(cp) ? cellW * 2 : cellW;
+        uint8_t* cov = getGlyph(cp);
+        if (cov) {
+            for (uint64_t gy = 0; gy < cellH; gy++) { int64_t by = penY + (int64_t)gy; if (by < 0 || by >= H) continue;
+                for (uint64_t gx = 0; gx < cw; gx++) { int64_t bx = penX + (int64_t)gx; if (bx < 0 || bx >= W) continue;
+                    uint8_t a = cov[gy * cw + gx]; if (a == 0) continue;
+                    uint32_t dst = fb[by * W + bx];
+                    uint8_t dr = (dst >> 16) & 0xFF, dg = (dst >> 8) & 0xFF, db = dst & 0xFF;
+                    uint8_t rr = (uint8_t)((cr * a + dr * (255 - a)) / 255);
+                    uint8_t rg = (uint8_t)((cg * a + dg * (255 - a)) / 255);
+                    uint8_t rb = (uint8_t)((cb * a + db * (255 - a)) / 255);
+                    fb[by * W + bx] = ((uint32_t)rr << 16) | ((uint32_t)rg << 8) | rb;
+                }
+            }
+        }
+        penX += (int64_t)cw;
+    }
+}
