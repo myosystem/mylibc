@@ -1,0 +1,5 @@
+template<typename T>
+T bit_ceil(T x) {
+    if (x <= 1) return 1;
+    return (T)1 << (sizeof(T) * 8 - __builtin_clzll((unsigned long long)(x - 1)));
+}
