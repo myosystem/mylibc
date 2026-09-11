@@ -13,6 +13,12 @@ namespace std {
 		string& operator=(string&& other) noexcept;
 		const char* c_str() const;
 		size_t size() const;
+		void shrink_to_fit();
+		void resize(size_t n, char ch = '\0');
+		void push_back(char ch);
+		string& append(const char* s);
+		string& append(const char* s, size_t n);
+		string& operator+=(string& str);
 	private:
 		char* data;
 		size_t length;
