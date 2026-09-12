@@ -59,6 +59,12 @@ namespace std
     void sort(Iter first, Iter last) {
         sort(first, last, [](const auto& a, const auto& b) { return a < b; });
     }
+    template <typename ForwardIt, typename T>
+    void fill(ForwardIt first, ForwardIt last, const T& value) {
+        for (; first != last; ++first) {
+            *first = value;
+        }
+    }
 }
 
 #endif /* __ALGORITHM__ */
