@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <new>
+#include <bits>
 using namespace std;
 
 string::string() {
@@ -14,8 +15,7 @@ string::string() {
 string::string(const char* s) {
 	length = 0;
 	while (s[length]) length++;
-	cap = 1;
-	while (length >= cap) cap *= 2;
+	cap = bit_ceil(length + 1);
 	data = new char[cap];
 	memcpy(data, s, length);
 	data[length] = '\0';
@@ -72,4 +72,51 @@ const char* string::c_str() const {
 }
 size_t string::size() const {
 	return length;
+}
+void string::shrink_to_fit() {
+	auto new_cap = bit_ceil(length + 1);
+	if (new_cap == cap) return;
+	cap = new_cap;
+	char* new_data = new char[cap];
+	memcpy(new_data, data, length);
+	delete[] data;
+	data = new_data;
+	data[length] = '\0';
+}
+void string::resize(size_t n, char ch) {
+	if (n == length) return;
+	size_t old_length = length;
+	length = n;
+	if (length >= cap) {
+		shrink_to_fit();          // 여기선 늘리는 역할 (cap = bit_ceil(length+1))
+	}
+	if (n > old_length) {
+		memset(data + old_length, ch, n - old_length);
+	}
+	data[length] = '\0';
+}
+void string::push_back(char ch) {
+	length++;
+	if (length >= cap) {
+		shrink_to_fit();
+	}
+	data[length - 1] = ch;
+	data[length] = '\0';
+}
+string& string::append(const char* s) {
+	return append(s, strlen(s));
+}
+string& string::append(const char* s, size_t n) {
+	size_t old_length = length;
+	length += n;
+	if (length >= cap) {
+		shrink_to_fit();
+	}
+	memcpy(data + old_length, s, n);
+	data[length] = '\0';
+	return *this;
+}
+string& string::operator+=(string& str) {
+	append(str.c_str(), str.size());
+	return *this;
 }
