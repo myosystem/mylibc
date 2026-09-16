@@ -1,0 +1,50 @@
+#ifndef __LIMITS__
+#define __LIMITS__
+namespace std {
+	template<class T> class numeric_limits {
+	public:
+		static constexpr bool is_specialized = false;
+		static constexpr T min() noexcept { return T(); }
+		static constexpr T max() noexcept { return T(); }
+		static constexpr T lowest() noexcept { return T(); }
+		static constexpr int digits = 0;
+		static constexpr bool is_signed = false;
+		static constexpr bool is_integer = false;
+		static constexpr int radix = 0;
+		static constexpr T epsilon() noexcept { return T(); }
+		static constexpr T infinity() noexcept { return T(); }
+		static constexpr T quiet_NaN() noexcept { return T(); }
+	};
+	template<class T> class numeric_limits<const T> : public numeric_limits<T> {};
+	template<class T> class numeric_limits<volatile T> : public numeric_limits<T> {};
+	template<class T> class numeric_limits<const volatile T> : public numeric_limits<T> {};
+	template<> class numeric_limits<double> {
+	public:
+		static constexpr bool is_specialized = true;
+		static constexpr double min() noexcept { return 0x1p-1022; }
+		static constexpr double max() noexcept { return 0x1.fffffffffffffp+1023; }
+		static constexpr double lowest() noexcept { return 	-max(); }
+		static constexpr double epsilon() noexcept { return 0x1p-52; }
+		static constexpr double infinity()  noexcept { return __builtin_huge_val(); }
+		static constexpr double quiet_NaN() noexcept { return __builtin_nan(""); }
+		static constexpr int digits = 53;
+		static constexpr bool is_signed = true;
+		static constexpr bool is_integer = false;
+		static constexpr int radix = 2;
+	};
+	template<> class numeric_limits<float> {
+	public:
+		static constexpr bool is_specialized = true;
+		static constexpr float min() noexcept { return 0x1p-126f; }
+		static constexpr float max() noexcept { return 0x1.fffffep+127f; }
+		static constexpr float lowest() noexcept { return -max(); }
+		static constexpr float epsilon() noexcept { return 0x1p-23f; }
+		static constexpr float infinity()  noexcept { return __builtin_huge_valf(); }
+		static constexpr float quiet_NaN() noexcept { return __builtin_nanf(""); }
+		static constexpr int digits = 24;
+		static constexpr bool is_signed = true;
+		static constexpr bool is_integer = false;
+		static constexpr int radix = 2;
+	};
+}
+#endif // __LIMITS__
