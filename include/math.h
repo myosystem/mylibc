@@ -9,7 +9,10 @@ double floor(double x);
 double ceil(double x);
 double round(double x);
 double sin(double x);
-
+float sinf(float x);
+double cos(double x);
+float cosf(float x);
+double sqrt(double x);
 
 #ifdef __cplusplus
 }
