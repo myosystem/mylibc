@@ -1,6 +1,8 @@
 #ifndef __RANDOM__
 #define __RANDOM__
-
+#include <stddef.h>
+#include <stdint.h>
+#include <limits>
 namespace std {
 
     template<class UIntType, size_t w, size_t n, size_t m, size_t r,
@@ -10,25 +12,46 @@ namespace std {
     private:
         UIntType mt[n];
         size_t index;
-        void twist();
+        static constexpr UIntType mask = (UIntType)-1 >> (sizeof(UIntType) * 8 - w);
+        void twist() {
+            static constexpr UIntType low_mask = ((UIntType)1 << r) - 1;
+            static constexpr UIntType high_mask = mask - low_mask;
+            for (size_t i = 0; i < n; i++) {
+                UIntType x = (mt[i] & high_mask) | (mt[(i + 1) % n] & low_mask);
+                UIntType lx = x >> 1;
+                if (x & 1) lx ^= a;
+                mt[i] = mt[(i + m) % n] ^ lx;
+            }
+            index = 0;
+        }
     public:
         typedef UIntType result_type;
-        static constexpr UIntType default_seed = 5489u;
+        static constexpr result_type default_seed = 5489u;
 
         explicit mersenne_twister_engine(UIntType value = default_seed) {
 			seed(value);
         }
         void seed(UIntType value = default_seed) {
-            mt[0] = value;
+            mt[0] = value & mask;
             for (size_t i = 1; i < n; i++) {
-                mt[i] = f * (mt[i - 1] ^ (mt[i - 1] >> (w - 2))) + i;
+                mt[i] = (f * (mt[i - 1] ^ (mt[i - 1] >> (w - 2))) + i) & mask;
             }
             index = n;
         }
-        static constexpr UIntType min();
-        static constexpr UIntType max();
-        UIntType operator()();
-        void discard(unsigned long long z);
+        static constexpr UIntType min() { return 0; }
+        static constexpr UIntType max() { return mask; }
+        UIntType operator()() {
+            if (index >= n) twist();
+            result_type y = mt[index++];
+            y ^= (y >> u) & d;
+            y ^= (y << s) & b;
+            y ^= (y << t) & c;
+            y ^= y >> l;
+            return y;
+        }
+        void discard(unsigned long long z) {
+            while (z--) (*this)();
+        }
     };
 }
 
