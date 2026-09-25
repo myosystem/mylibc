@@ -1,0 +1,29 @@
+#ifndef __BIT__
+#define __BIT__
+namespace std {
+    template<class T> constexpr int countl_zero(T x) noexcept {
+        constexpr int N = (int)(sizeof(T) * 8);
+        return x ? __builtin_clzll((unsigned long long)x) - (64 - N) : N;
+    }
+    template<class T> constexpr int countr_zero(T x) noexcept {
+        constexpr int N = (int)(sizeof(T) * 8);
+        return x ? __builtin_ctzll((unsigned long long)x) : N;
+    }
+    template<class T> constexpr int popcount(T x) noexcept {
+        return __builtin_popcountll((unsigned long long)x);
+    }
+    template<class T> constexpr int bit_width(T x) noexcept {
+        return (int)(sizeof(T) * 8) - countl_zero(x);
+    }
+    template<class T> constexpr bool has_single_bit(T x) noexcept { return x && !(x & (x - 1)); }
+    template<class T> constexpr T bit_floor(T x) noexcept {
+        return x ? (T)((T)1 << (bit_width(x) - 1)) : (T)0;
+    }
+    template<class T> constexpr T bit_ceil(T x) noexcept {
+        return x <= 1 ? (T)1 : (T)((T)1 << bit_width((T)(x - 1)));
+    }
+    template<class To, class From> constexpr To bit_cast(const From& from) noexcept {
+        return __builtin_bit_cast(To, from);
+    }
+}
+#endif // __BIT__
