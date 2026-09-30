@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <limits>
-#include <bit>
 namespace std {
 
     template<class UIntType, size_t w, size_t n, size_t m, size_t r,
@@ -68,19 +67,25 @@ namespace std {
     template<class RealType, size_t bits, class URBG>
     RealType generate_canonical(URBG& g) {
         constexpr size_t Rm1 = g.max() - g.min();
-        constexpr size_t w = std::bit_width(Rm1);
+        constexpr size_t w = Rm1 ? 64 - __builtin_clzll(Rm1) : 0;
         constexpr size_t b = bits < numeric_limits<RealType>::digits ? bits : numeric_limits<RealType>::digits;
         constexpr size_t k = (b + w - 1) / w;
         constexpr size_t drop = k * w - b;
 
-        size_t acc = (g() - g.min()) >> drop;   // 76행: >> drop 추가
-        for (size_t i = 1; i < k; i++)
-            acc = (acc << w) | (g() - g.min());
-        constexpr RealType scale = [] {
+        size_t acc = (g() - g.min()) >> drop;
+		if (k > 1)      // avoid warning about shift count >= width of type
+            for (size_t i = 1; i < k; i++)
+                acc = (acc << w) | (g() - g.min());
+#if __cplusplus >= 201703L
+        constexpr RealType scale = []() -> RealType {
             RealType r = 1;
             for (size_t i = 0; i < b; i++) r /= 2;
             return r;
             }();
+#else
+        RealType scale = 1;
+        for (size_t i = 0; i < b; i++) scale /= 2;
+#endif
         return (RealType)acc * scale;
     }
 }
