@@ -582,4 +582,76 @@ void WinDraw::drawText(int64_t x, int64_t y, const char* text, uint32_t color) {
         }
         penX += (int64_t)cw;
     }
+Socket::Socket(SocketType type, uint32_t port) {
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(socket_id_)
+		: "a"((uint64_t)36), "D"((uint64_t)0), "S"((uint64_t)type), "d"((uint64_t)port)
+	);
+}
+Socket::~Socket() {}
+void Socket::connect(uint32_t dst_ip, uint16_t dst_port) {
+	register uint64_t rbxv __asm__("rbx") = dst_port;
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+	: "a"((uint64_t)36), "D"((uint64_t)3), "S"((uint64_t)socket_id_), "d"((uint64_t)dst_ip), "r"(rbxv)
+		: "rcx", "r11", "memory"
+		);
+}
+void Socket::set_device(uint64_t device_id) {
+	// rdi=4: device_id=rdx
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+		: "a"((uint64_t)36), "D"((uint64_t)4), "S"((uint64_t)socket_id_), "d"(device_id)
+		: "rcx", "r11", "memory"
+	);
+}
+void Socket::set_option(uint64_t opt) {
+	// rdi=5: opt=rdx
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+		: "a"((uint64_t)36), "D"((uint64_t)5), "S"((uint64_t)socket_id_), "d"(opt)
+		: "rcx", "r11", "memory"
+	);
+}
+void Socket::send(const char* data, uint16_t len) {
+	// rdi=1: data=r10, len=r13 (dst는 connect로 설정된 소켓 dst_ 사용)
+	register uint64_t r10v __asm__("r10") = (uint64_t)data;
+	register uint64_t r13v __asm__("r13") = len;
+	__asm__ __volatile__(
+		"int 0x80"
+		:
+		: "a"((uint64_t)36), "D"((uint64_t)1), "S"((uint64_t)socket_id_),
+		  "r"(r10v), "r"(r13v)
+		: "rcx", "r11", "memory"
+	);
+}
+int Socket::recv(uint8_t* data, uint16_t* len) {
+	// rdi=2: data=r9, len*=r10(용량 in), 반환 size=rax
+	uint64_t result;
+	register uint64_t r9v  __asm__("r9")  = (uint64_t)data;
+	register uint64_t r10v __asm__("r10") = (uint64_t)len;
+	__asm__ __volatile__(
+		"int 0x80"
+		: "=a"(result)
+		: "a"((uint64_t)36), "D"((uint64_t)2), "S"((uint64_t)socket_id_),
+		  "r"(r9v), "r"(r10v)
+		: "rcx", "r11", "memory"
+	);
+	return (int)(uint16_t)result;
+}
+uint16_t htons(uint16_t n) {
+	return (uint16_t)((n << 8) | (n >> 8));
+}
+uint32_t htonl(uint32_t n) {
+	return ((n >> 24) & 0xff) | ((n << 8) & 0xff0000) | ((n >> 8) & 0xff00) | ((n << 24) & 0xff000000);
+}
+uint16_t ntohs(uint16_t n) {
+	return (uint16_t)((n << 8) | (n >> 8));
+}
+uint32_t ntohl(uint32_t n) {
+	return ((n >> 24) & 0xff) | ((n << 8) & 0xff0000) | ((n >> 8) & 0xff00) | ((n << 24) & 0xff000000);
 }

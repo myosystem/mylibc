@@ -45,6 +45,10 @@ enum {
 	MSG_CONSOLE_SIZE_GET = MSG_CONSOLE_BASE + 5,
 	MSG_CONSOLE_CURSOR_SET = MSG_CONSOLE_BASE + 6,
 	MSG_CONSOLE_CURSOR_GET = MSG_CONSOLE_BASE + 7,
+
+	// Socket
+	MSG_SOCKET_BASE = 0x5000,
+	MSG_SOCKET_DATA = MSG_SOCKET_BASE + 1,
 };
 enum {
 	CONSOLE_MODE_CANONICAL = 0,
@@ -233,6 +237,35 @@ public:
     ~WinDraw();
     WinDraw(const WinDraw&) = delete;
     void drawText(int64_t x, int64_t y, const char* text, uint32_t color = 0xFFFFFF);
+enum SocketType {
+    ICMP = 1,
+    TCP = 2,
+    UDP = 3,
 };
-
+// 소켓 옵션 (한 번 설정하면 계속 유지됨)
+#define SOCK_OPT_BLOCKING 0b10    // 데이터 올 때까지 recv 에서 대기
+#define SOCK_OPT_MESSAGE  0b100   // 데이터 오면 MSG_SOCKET_DATA 발송
+class Socket {
+private:
+    uint64_t socket_id_;
+public:
+    Socket(SocketType type, uint32_t port = -1);
+	~Socket();
+	void connect(uint32_t dst_ip, uint16_t dst_port);
+	void set_device(uint64_t device_id);   // 라우트 조회를 건너뛰고 이 장치로 고정. -1이면 해제
+	void set_option(uint64_t opt);         // SOCK_OPT_* 조합. 0이면 전부 해제
+	void send(const char* data, uint16_t len);
+	int recv(uint8_t* data, uint16_t* len);   // 받은 크기, 받을 게 없으면 -1
+};
+static inline uint32_t ipaddr(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+	return ((uint32_t)a << 24) | ((uint32_t)b << 16) | ((uint32_t)c << 8) | (uint32_t)d;
+}
+uint16_t htons(uint16_t);
+uint32_t htonl(uint32_t);
+uint16_t ntohs(uint16_t);
+uint32_t ntohl(uint32_t);
+#define ICMP_ECHO_REPLY     0
+#define ICMP_ECHO_REQUEST   8
+#define ICMP_DEST_UNREACH   3
+#define ICMP_TIME_EXCEEDED  11
 #endif // __MYOS__
