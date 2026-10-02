@@ -10,7 +10,9 @@ namespace std {
 	public:
 		typedef size_t size_type;
 		vector() : data_(nullptr), size_(0), capacity_(0) {}
-		explicit vector(size_t n) : data_(nullptr), size_(0), capacity_(0) { resize(n); }
+		explicit vector(size_t n, const T& value = T()) : data_(nullptr), capacity_(0), size_(0) {
+			resize(n, value);
+		}
 		vector(const vector& o) : data_(nullptr), size_(0), capacity_(0) {
 			reserve(o.size_);
 			for (size_t i = 0; i < o.size_; i++) { new (data_ + i) T(o.data_[i]); size_++; }
@@ -110,6 +112,20 @@ namespace std {
 			}
 			for (size_type i = size_; i < new_size; i++) {
 				new (data_ + i) T();
+			}
+			for (size_type i = new_size; i < size_; i++) {
+				data_[i].~T();
+			}
+			size_ = new_size;
+		}
+		void resize(size_type new_size, const T& value) {
+			if (new_size > capacity_) {
+				while (capacity_ < new_size) {
+					resize();
+				}
+			}
+			for (size_type i = size_; i < new_size; i++) {
+				*(T*)(data_ + i) = value;
 			}
 			for (size_type i = new_size; i < size_; i++) {
 				data_[i].~T();
