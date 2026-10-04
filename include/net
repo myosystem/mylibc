@@ -1,0 +1,39 @@
+#ifndef __NET_H__
+#define __NET_H__
+#include <stdint.h>
+
+// 네트워크 설정 API.
+// ip(8) 명령 구조를 따라 대상별로 나눔:  Net::Link / Net::Addr / Net::Route
+namespace Net {
+
+    // 점 표기 IP를 32비트로 (호스트 바이트오더). ipaddr(192,168,0,1)
+    constexpr uint32_t ipaddr(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+        return ((uint32_t)a << 24) | ((uint32_t)b << 16) | ((uint32_t)c << 8) | (uint32_t)d;
+    }
+    // 프리픽스 길이를 넷마스크로. netmask(24) == 255.255.255.0
+    constexpr uint32_t netmask(int prefix) {
+        return prefix <= 0 ? 0u : (prefix >= 32 ? 0xFFFFFFFFu : ~((1u << (32 - prefix)) - 1u));
+    }
+
+    namespace Link {
+        // 장치 개수. 인덱스는 0 .. count()-1
+        int count();
+        // 장치의 MAC 주소를 out[6]에 채움
+        bool mac(int dev, uint8_t out[6]);
+    }
+
+    namespace Addr {
+        // 장치의 현재 IP. 미설정이면 0
+        uint32_t get(int dev);
+        // 장치 IP 설정
+        bool set(int dev, uint32_t ip);
+    }
+
+    namespace Route {
+        // dest/netmask 네트워크를 dev로 보냄. gateway=0 이면 온링크(직접 연결)
+        bool add(uint32_t dest, uint32_t netmask, uint32_t gateway, int dev);
+        // 해당 장치의 라우트를 전부 제거
+        bool del(int dev);
+    }
+}
+#endif /* __NET_H__ */
