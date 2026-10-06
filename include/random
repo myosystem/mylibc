@@ -107,5 +107,63 @@ namespace std {
             return result;
         }
     }
+	template <class RealType = double>
+    class uniform_real_distribution {
+    public:
+        class param_type {
+        private:
+            RealType _a;
+            RealType _b;
+        public:
+            typedef uniform_real_distribution<RealType> distribution_type;
+			explicit param_type(RealType a = RealType(0.0), RealType b = RealType(1.0)) : _a(a), _b(b) {}
+			RealType a() const { return _a; }
+			RealType b() const { return _b; }
+            bool operator==(const param_type& p) const {
+				return p._a == _a && p._b == _b;
+            }
+            bool operator!=(const param_type& p) const {
+				return !(operator==(p));
+            }
+        };
+    private:
+        param_type _param;
+    public:
+        typedef RealType result_type;
+
+        explicit uniform_real_distribution(RealType a = RealType(0), RealType b = RealType(1)) : _param(a, b) {}
+		explicit uniform_real_distribution(const param_type& p) : _param(p.a(), p.b()) {}
+        RealType a() const {
+            return _param.a();
+        }
+        RealType b() const {
+			return _param.b();
+        }
+        param_type param() const {
+            return _param;
+        }
+        void param(const param_type& p) {
+			_param = p;
+        }
+        result_type min() const {
+			return _param.a();
+        }
+        result_type max() const {
+			return _param.b();
+        }
+        void reset() {}
+        template<class URBG> result_type operator()(URBG& g, const param_type& p) {
+			return generate_canonical<RealType, numeric_limits<RealType>::digits, URBG>(g)* (p.b() - p.a()) + p.a();
+        }
+        template<class URBG> result_type operator()(URBG& g) {
+            return operator()<URBG>(g, _param);
+        }
+        bool operator==(const uniform_real_distribution& d) const {
+			return _param == d._param;
+        }
+        bool operator!=(const uniform_real_distribution& d) const {
+			return !(operator==(d));
+        }
+    };
 }
 #endif // __RANDOM__
