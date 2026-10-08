@@ -86,5 +86,7 @@ float cosf(float x) {
 	return _sinf(r);
 }
 double sqrt(double x) {
-	return __builtin_sqrt(x);
+	double r;
+	__asm__("sqrtsd %0, %1" : "=x"(r) : "x"(x));
+	return r;
 }
