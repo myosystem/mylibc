@@ -85,6 +85,15 @@ float cosf(float x) {
 	if ((n & 3) == 2) return -_cosf(r);
 	return _sinf(r);
 }
+static double _atan(double x) {
+	constexpr double n3 = -(1.0 / 3.0);
+	constexpr double n5 = +(1.0 / 5.0);
+	constexpr double n7 = -(1.0 / 7.0);
+	constexpr double n9 = +(1.0 / 9.0);
+	constexpr double n11 = -(1.0 / 11.0);
+	double x2 = x * x;
+	return x * (1.0 + x2 * (n3 + x2 * (n5 + x2 * (n7 + x2 * (n9 + x2 * n11)))));
+}
 double sqrt(double x) {
 	double r;
 	__asm__("sqrtsd %0, %1" : "=x"(r) : "x"(x));
