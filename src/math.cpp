@@ -86,12 +86,12 @@ float cosf(float x) {
 	return _sinf(r);
 }
 static double _atan(double x) {
-	constexpr double n3 = -(1.0 / 3.0);
-	constexpr double n5 = +(1.0 / 5.0);
-	constexpr double n7 = -(1.0 / 7.0);
-	constexpr double n9 = +(1.0 / 9.0);
-	constexpr double n11 = -(1.0 / 11.0);
-	double x2 = x * x;
+	constexpr double c[13] = { 1.0,-1.0 / 3,1.0 / 5,-1.0 / 7,1.0 / 9,-1.0 / 11,1.0 / 13,
+						  -1.0 / 15,1.0 / 17,-1.0 / 19,1.0 / 21,-1.0 / 23,1.0 / 25 };
+	double s = x * x, acc = 0;
+	for (int i = 12; i >= 0; i--) acc = c[i] + s * acc;   // 호너를 루프로
+	return x * acc;
+}
 	return x * (1.0 + x2 * (n3 + x2 * (n5 + x2 * (n7 + x2 * (n9 + x2 * n11)))));
 }
 double sqrt(double x) {
