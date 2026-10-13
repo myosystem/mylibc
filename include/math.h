@@ -12,6 +12,7 @@ double sin(double x);
 float sinf(float x);
 double cos(double x);
 float cosf(float x);
+double atan(double x);
 double sqrt(double x);
 
 #ifdef __cplusplus

@@ -1,4 +1,5 @@
 #include <math.h>
+#include <limits>
 double floor(double x) {
     double t = (double)(long long)x;
     return (t > x) ? t - 1.0 : t;
@@ -92,7 +93,16 @@ static double _atan(double x) {
 	for (int i = 12; i >= 0; i--) acc = c[i] + s * acc;   // 호너를 루프로
 	return x * acc;
 }
-	return x * (1.0 + x2 * (n3 + x2 * (n5 + x2 * (n7 + x2 * (n9 + x2 * n11)))));
+double atan(double x) {
+	if (x == 0) return 0;
+	if (x == std::numeric_limits<double>::infinity()) return MATH_PI / 2;
+	constexpr double SQRT3 = 1.7320508075688772;
+	constexpr double PI6 = 0.5235987755982988;
+	constexpr double TAN15 = 0.2679491924311227;      // tan 15°
+	if (x < 0)      return -atan(-x);
+	if (x > TAN15)  return PI6 + atan((x * SQRT3 - 1.0) / (x + SQRT3));  // 30° 깎고 재귀
+	return _atan(x);                                   // 밴드 안 → 다항식
+}
 }
 double sqrt(double x) {
 	double r;
