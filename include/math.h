@@ -13,6 +13,7 @@ float sinf(float x);
 double cos(double x);
 float cosf(float x);
 double atan(double x);
+double atan2(double y, double x);
 double sqrt(double x);
 
 #ifdef __cplusplus

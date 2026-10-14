@@ -103,6 +103,14 @@ double atan(double x) {
 	if (x > TAN15)  return PI6 + atan((x * SQRT3 - 1.0) / (x + SQRT3));  // 30° 깎고 재귀
 	return _atan(x);                                   // 밴드 안 → 다항식
 }
+double atan2(double y, double x) {
+	if (x > 0) return atan(y / x);
+	else if (x < 0) return atan(y / x) + (y >= 0 ? MATH_PI : -MATH_PI);
+	else {
+		if (y > 0) return  MATH_PI / 2;
+		else if (y < 0) return -MATH_PI / 2;
+		else return 0;
+	}
 }
 double sqrt(double x) {
 	double r;
