@@ -1,0 +1,112 @@
+#ifndef __TYPE_TRAITS__
+#define __TYPE_TRAITS__
+
+namespace std {
+	template<class T, T v> class integral_constant {
+	public:
+		static constexpr T value = v;
+		typedef T value_type;
+		typedef integral_constant type;
+		constexpr operator value_type() const noexcept {
+			return value;
+		}
+		constexpr value_type operator()() const noexcept {
+			return value;
+		}
+	};
+	template<class T, T v> constexpr T integral_constant<T, v>::value;
+	typedef integral_constant<bool, true>  true_type;
+	typedef integral_constant<bool, false> false_type;
+
+	template<class T, class U>
+	class is_same : public false_type {};
+
+	template<class T>
+	class is_same<T, T> : public true_type {};
+
+	template<class T>
+	class is_void : public false_type {};
+	template<> class is_void<void> : public true_type {};
+	template<> class is_void<const void> : public true_type {};
+	template<> class is_void<volatile void> : public true_type {};
+	template<> class is_void<const volatile void> : public true_type {};
+
+	template<bool B, class T = void>
+	class enable_if {};
+
+	template<class T>
+	class enable_if<true, T> {
+	public:
+		typedef T type;
+	};
+
+	template<class T>
+	class remove_reference {
+	public:
+		typedef T type;
+	};
+
+	template<class T>
+	class remove_reference<T&> {
+	public:
+		typedef T type;
+	};
+
+	template<class T>
+	class remove_reference<T&&> {
+	public:
+		typedef T type;
+	};
+
+	template<class T>
+	class add_rvalue_reference {
+	public:
+		typedef T&& type;
+	};
+	template<> class add_rvalue_reference<void> {
+	public:
+		typedef void type;
+	};
+	template<> class add_rvalue_reference<const void> {
+	public:
+		typedef const void type;
+	};
+	template<> class add_rvalue_reference<volatile void> {
+	public:
+		typedef volatile void type;
+	};
+	template<> class add_rvalue_reference<const volatile void> {
+	public:
+		typedef const volatile void type;
+	};
+
+	template<class T>
+	typename add_rvalue_reference<T>::type declval() noexcept;
+
+	template<class From, class To>
+	class is_convertible {
+	private:
+		template<class X> static char probe(X);
+		template<class X> static int  probe(...);
+	public:
+		static constexpr bool value = sizeof(probe<To>(declval<From>())) == 1;
+	};
+	template<class To> class is_convertible<void, To> {
+	public:
+		static constexpr bool value = is_void<To>::value;
+	};
+	template<class To> class is_convertible<const void, To> {
+	public:
+		static constexpr bool value = is_void<To>::value;
+	};
+	template<class To> class is_convertible<volatile void, To> {
+	public:
+		static constexpr bool value = is_void<To>::value;
+	};
+	template<class To> class is_convertible<const volatile void, To> {
+	public:
+		static constexpr bool value = is_void<To>::value;
+	};
+}
+
+#endif // __TYPE_TRAITS__
