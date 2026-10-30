@@ -5,6 +5,7 @@
 #include <limits>
 #include <initializer_list>
 #include <vector>
+#include <type_traits>
 namespace std {
 
     template<class UIntType, size_t w, size_t n, size_t m, size_t r,
@@ -30,6 +31,8 @@ namespace std {
         typedef UIntType result_type;
         static constexpr result_type default_seed = 5489u;
 
+        template<class Sseq, class = typename enable_if<!is_convertible<Sseq, UIntType>::value && !is_same<Sseq, mersenne_twister_engine>::value>::type>
+        explicit mersenne_twister_engine(Sseq& q) { seed(q); }
         explicit mersenne_twister_engine(UIntType value = default_seed) {
             seed(value);
         }
@@ -37,6 +40,32 @@ namespace std {
             mt[0] = value & mask;
             for (size_t i = 1; i < n; i++) {
                 mt[i] = (f * (mt[i - 1] ^ (mt[i - 1] >> (w - 2))) + i) & mask;
+            }
+            index = n;
+        }
+        template<class Sseq, class = typename enable_if<!is_convertible<Sseq, UIntType>::value && !is_same<Sseq, mersenne_twister_engine>::value>::type>
+        void seed(Sseq& q) {
+            constexpr size_t k = (w + 31) / 32;
+            uint_least32_t arr[n * k];
+            q.generate(arr, arr + (n * k));
+            for (size_t i = 0; i < n; i++) {
+                UIntType x = 0;
+                for (size_t j = 0; j < k; j++)
+                    x |= (UIntType)arr[k * i + j] << (32 * j);
+                mt[i] = x & mask;
+            }
+            static constexpr UIntType low_mask = ((UIntType)1 << r) - 1;
+            static constexpr UIntType high_mask = mask - low_mask;
+            if ((mt[0] & high_mask) == 0) {
+                bool is_all_zero = [&]() {
+                    for (size_t i = 1; i < n; i++) {
+                        if (mt[i] != 0) return false;
+                    }
+                    return true;
+                    }();
+                if (is_all_zero) {
+                    mt[0] = (UIntType)1 << (w - 1);
+                }
             }
             index = n;
         }
