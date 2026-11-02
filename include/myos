@@ -154,6 +154,7 @@ struct POINT {
     int64_t y;
 };
 uint64_t get_tsc();
+uint64_t get_frequency();
 uint64_t get_cycles();
 uint64_t get_memory_size();
 uint64_t get_used_memory_size();
@@ -205,6 +206,8 @@ protected:
     FILE* f = nullptr; OffsetSubtable header = {};
     uint16_t unitsPerEm = 0, locFormat = 0, numGlyphs = 0; uint32_t locaoffset = 0, glyphIndex = 0;
     int16_t fontXMin = 0, fontYMin = 0;   // head 전역 bbox 최소값 (음수 보정/베이스라인 통일용)
+    uint32_t hmtxOffset = 0; uint16_t numHMetrics = 0;
+    uint16_t getAdvance(uint16_t gi);
     std::vector<uint16_t> endCodes, startCodes, idRangeOffsets, glyphIdArray; std::vector<int16_t> idDeltas;
     struct GlyphPoint { int x, y; bool onCurve; };
     struct Glyph { GlyphPoint p1, p2, p3; };
@@ -212,7 +215,7 @@ protected:
     uint16_t getGlyphIndex(uint16_t unicode);
     uint32_t getGlyphOffset(uint16_t gi);
     static std::vector<uint8_t> downsample(const bool* src, int srcStride, int srcW, int srcH, int dstW, int dstH);
-    bool drawGlyph(uint32_t glyphoffset, uint32_t* bitmap, uint64_t bw, uint64_t bh);
+    bool drawGlyph(uint32_t glyphoffset, uint32_t* bitmap, uint64_t bw, uint64_t bh, uint16_t advance_units);
 public:
     Font(const char* path);
     ~Font();
@@ -228,15 +231,20 @@ public:
 class WinDraw {
 private:
     Window* win;                   // 그릴 대상 (win->gbuf)
-    Font*   font;                  // 폰트 (소유 안 함)
+    Font* font;                  // 폰트 (소유 안 함)
     uint64_t cellW, cellH;         // 글자 셀 크기(px)
     std::vector<uint8_t*> cache;   // [코드포인트] → 커버리지 셀(폭*cellH), nullptr=미로드
     uint8_t* getGlyph(uint32_t cp);   // 필요 시 렌더 후 캐시, 커버리지 반환 (더블폭이면 폭=2*cellW)
 public:
-    WinDraw(Window* w, Font* f, uint64_t cellW, uint64_t cellH);
+    WinDraw(Window* window);
     ~WinDraw();
     WinDraw(const WinDraw&) = delete;
+	void drawPixel(int64_t x, int64_t y, uint32_t color = 0xFFFFFF);
+	void setFont(Font* f, uint64_t cell_width, uint64_t cell_height) { font = f; cellW = cell_width; cellH = cell_height; }
     void drawText(int64_t x, int64_t y, const char* text, uint32_t color = 0xFFFFFF);
+    void line_ellipse(int64_t x, int64_t y, uint64_t w, uint64_t h, uint32_t color = 0xFFFFFF, int64_t thick = 1);
+    void fill_ellipse(int64_t x, int64_t y, uint64_t w, uint64_t h, uint32_t outline_color = 0xFFFFFF, uint32_t fill_color = 0x000000);
+};
 enum SocketType {
     ICMP = 1,
     TCP = 2,
