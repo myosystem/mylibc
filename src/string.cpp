@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <new>
-#include <bits>
+#include <bit>
 using namespace std;
 
 string::string() {
